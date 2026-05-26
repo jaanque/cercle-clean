@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, View } from 'react-native';
 
-import CerclePlus from '@/components/cercle-plus/cercle-plus';
-import Header from '@/components/header/header';
-import { Store } from '@/components/locales/locale-card';
-import Locales from '@/components/locales/locales';
-import { Product } from '@/components/ofertas/oferta-card';
-import Ofertas from '@/components/ofertas/ofertas';
-import Sellos from '@/components/sellos/sellos';
+import CerclePlus from '@/components/homeScreen/cercle-plus/cercle-plus';
+import Header from '@/components/homeScreen/header/header';
+import { Store } from '@/components/homeScreen/locales/locale-card';
+import Locales from '@/components/homeScreen/locales/locales';
+import { Product } from '@/components/homeScreen/ofertas/oferta-card';
+import Ofertas from '@/components/homeScreen/ofertas/ofertas';
+import Sellos from '@/components/homeScreen/sellos/sellos';
 
 export default function HomeScreen() {
   // ==========================================

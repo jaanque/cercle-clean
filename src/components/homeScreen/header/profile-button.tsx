@@ -1,11 +1,14 @@
-import React from 'react';
-import { StyleSheet, Pressable } from 'react-native';
-import { SymbolView } from 'expo-symbols';
 import { Colors } from '@/constants/theme';
+import { useRouter } from 'expo-router'; // 1. Importamos el router
+import { SymbolView } from 'expo-symbols';
+import { Pressable, StyleSheet } from 'react-native';
 
 export default function ProfileButton() {
+  const router = useRouter(); // 2. Instanciamos el router
+
   return (
-    <Pressable style={styles.button}>
+    // 3. Añadimos el evento onPress apuntando a la ruta que hemos creado
+    <Pressable style={styles.button} onPress={() => router.push('/profile')}>
       <SymbolView
         name={{ ios: 'person', android: 'person', web: 'person' }}
         size={22}
