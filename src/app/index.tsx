@@ -1,10 +1,10 @@
 import { ScrollView } from 'react-native';
 
-import Header from '@/components/header/header';
-import Sellos from '@/components/sellos/sellos';
 import CerclePlus from '@/components/cercle-plus/cercle-plus';
-import Ofertas from '@/components/ofertas/ofertas';
+import Header from '@/components/header/header';
 import Locales from '@/components/locales/locales';
+import Ofertas from '@/components/ofertas/ofertas';
+import Sellos from '@/components/sellos/sellos';
 
 export default function HomeScreen() {
   return (
@@ -12,8 +12,8 @@ export default function HomeScreen() {
       <Header />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
         <Sellos />
-        <CerclePlus />
         <Ofertas />
+        <CerclePlus />
         <Locales />
       </ScrollView>
     </>

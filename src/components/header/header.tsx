@@ -7,7 +7,7 @@ import { Colors } from '@/constants/theme';
 
 export default function Header() {
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
       <View style={styles.container}>
         <ProfileButton />
         <SearchBar />
