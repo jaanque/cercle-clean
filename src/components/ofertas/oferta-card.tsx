@@ -2,13 +2,33 @@ import React from 'react';
 import { View, StyleSheet, Text, Image, Pressable } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import { Colors } from '@/constants/theme';
-import { Oferta } from '@/mockData/ofertas';
 
-interface OfertaCardProps {
-  oferta: Oferta;
+export interface Product {
+  id: string;
+  name: string;
+  price: string;
+  original_price: string;
+  image: string;
+  rating: string;
+  reviews_count: string;
+  store_id: string;
+  stock: number;
 }
 
+interface OfertaCardProps {
+  oferta: Product;
+}
+
+// Helper to compute savings amount from price strings (e.g. "120 €" - "45 €" = 75)
+const getSavingAmount = (originalPriceStr: string, priceStr: string): number => {
+  const orig = parseFloat(originalPriceStr.replace(/[^0-9.]/g, '')) || 0;
+  const curr = parseFloat(priceStr.replace(/[^0-9.]/g, '')) || 0;
+  return Math.max(0, Math.round(orig - curr));
+};
+
 export default function OfertaCard({ oferta }: OfertaCardProps) {
+  const savingAmount = getSavingAmount(oferta.original_price, oferta.price);
+
   return (
     <Pressable style={styles.card}>
       {/* Image Area with Badges */}
@@ -16,9 +36,11 @@ export default function OfertaCard({ oferta }: OfertaCardProps) {
         <Image source={{ uri: oferta.image }} style={styles.image} />
         
         {/* Top-Left Savings Badge */}
-        <View style={styles.savingBadge}>
-          <Text style={styles.savingText}>Ahorras {oferta.savingAmount}€</Text>
-        </View>
+        {savingAmount > 0 && (
+          <View style={styles.savingBadge}>
+            <Text style={styles.savingText}>Ahorras {savingAmount}€</Text>
+          </View>
+        )}
 
         {/* Bottom-Right Rating Badge */}
         <View style={styles.ratingBadge}>
@@ -28,7 +50,7 @@ export default function OfertaCard({ oferta }: OfertaCardProps) {
             tintColor="#F5A623"
           />
           <Text style={styles.ratingText}>
-            {oferta.rating} <Text style={styles.ratingCount}>({oferta.ratingCount})</Text>
+            {oferta.rating} <Text style={styles.ratingCount}>{oferta.reviews_count}</Text>
           </Text>
         </View>
       </View>
@@ -38,13 +60,13 @@ export default function OfertaCard({ oferta }: OfertaCardProps) {
         {/* Left Column (Info & Price) */}
         <View style={styles.infoCol}>
           <Text style={styles.title} numberOfLines={1}>
-            {oferta.title}
+            {oferta.name}
           </Text>
-          <Text style={styles.storeName}>{oferta.storeName}</Text>
+          <Text style={styles.storeName}>Fashion Hub</Text>
           
           <View style={styles.priceRow}>
-            <Text style={styles.price}>{oferta.price} €</Text>
-            <Text style={styles.originalPrice}>{oferta.originalPrice} €</Text>
+            <Text style={styles.price}>{oferta.price}</Text>
+            <Text style={styles.originalPrice}>{oferta.original_price}</Text>
           </View>
         </View>
 

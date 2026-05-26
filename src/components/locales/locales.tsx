@@ -1,27 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ActivityIndicator } from 'react-native';
-import LocalesHeader from './locales-header';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import LocaleCard, { Store } from './locale-card';
+import LocalesHeader from './locales-header';
 
-export default function Locales() {
-  const [stores, setStores] = useState<Store[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch('https://icjheiuqbgaozzmgdmpg.supabase.co/functions/v1/select-stores')
-      .then((response) => response.json())
-      .then((data) => {
-        if (data && data.stores) {
-          setStores(data.stores);
-        }
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error('Error fetching stores:', error);
-        setLoading(false);
-      });
-  }, []);
-
+// Ahora recibe los datos como "props" (parametros)
+export default function Locales({ stores, loading }: { stores: Store[], loading: boolean }) {
   return (
     <View style={styles.container}>
       <LocalesHeader />
@@ -39,11 +21,6 @@ export default function Locales() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    marginTop: 20,
-    width: '100%',
-  },
-  listContainer: {
-    paddingHorizontal: 16,
-  },
+  container: { marginTop: 20, width: '100%' },
+  listContainer: { paddingHorizontal: 16 },
 });

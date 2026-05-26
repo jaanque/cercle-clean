@@ -1,10 +1,13 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import OfertasHeader from './ofertas-header';
-import OfertaCard from './oferta-card';
-import { mockOfertas } from '@/mockData/ofertas';
+import OfertaCard, { Product } from './oferta-card';
 
-export default function Ofertas() {
+interface OfertasProps {
+  ofertas: Product[];
+}
+
+export default function Ofertas({ ofertas }: OfertasProps) {
   return (
     <View style={styles.container}>
       <OfertasHeader />
@@ -13,7 +16,7 @@ export default function Ofertas() {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {mockOfertas.map((oferta) => (
+        {ofertas.map((oferta) => (
           <OfertaCard key={oferta.id} oferta={oferta} />
         ))}
       </ScrollView>
