@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
   imageContainer: {
     width: '100%',
     height: 155,
-    borderRadius: 24,
+    borderRadius: 22,
     overflow: 'hidden',
     position: 'relative',
     backgroundColor: '#F0F0F0',
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background2,
     paddingVertical: 8,
     paddingHorizontal: 14,
-    borderRadius: 20,
+    borderRadius: 22,
     borderWidth: 1,
     borderColor: '#EAEAEA',
     justifyContent: 'center',

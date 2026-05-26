@@ -49,7 +49,7 @@ export default function CerclePlusCard() {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.background2,
-    borderRadius: 28,
+    borderRadius: 22,
     borderWidth: 1,
     borderColor: '#EAEAEA',
     padding: 20,
@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderWidth: 1,
     borderColor: '#EAEAEA',
-    borderRadius: 24,
+    borderRadius: 22,
     paddingVertical: 10,
     paddingHorizontal: 18,
   },
