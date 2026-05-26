@@ -2,10 +2,20 @@ import React from 'react';
 import { View, StyleSheet, Text, Image, Pressable } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import { Colors } from '@/constants/theme';
-import { Locale } from '@/mockData/locales';
+
+export interface Store {
+  id: string;
+  name: string;
+  rating: string;
+  reviews_count: string;
+  delivery_time: string;
+  image: string;
+  logo?: string;
+  tagline?: string;
+}
 
 interface LocaleCardProps {
-  locale: Locale;
+  locale: Store;
 }
 
 export default function LocaleCard({ locale }: LocaleCardProps) {
@@ -23,7 +33,7 @@ export default function LocaleCard({ locale }: LocaleCardProps) {
             tintColor="#F5A623"
           />
           <Text style={styles.ratingText}>
-            {locale.rating} <Text style={styles.ratingCount}>({locale.ratingCount})</Text>
+            {locale.rating} <Text style={styles.ratingCount}>{locale.reviews_count}</Text>
           </Text>
         </View>
       </View>
@@ -33,11 +43,11 @@ export default function LocaleCard({ locale }: LocaleCardProps) {
         {/* Row 1: Name and Distance */}
         <View style={styles.row}>
           <Text style={styles.name}>{locale.name}</Text>
-          <Text style={styles.distance}>{locale.distance}</Text>
+          <Text style={styles.distance}>2.7 km</Text>
         </View>
 
         {/* Row 2: Preparation Time */}
-        <Text style={styles.prepTime}>{locale.prepTime}</Text>
+        <Text style={styles.prepTime}>Listo en {locale.delivery_time}</Text>
       </View>
     </Pressable>
   );
