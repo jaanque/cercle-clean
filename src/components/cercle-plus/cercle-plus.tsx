@@ -12,7 +12,7 @@ export default function CerclePlus() {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 15,
+    marginTop: 20,
     paddingHorizontal: 16,
     width: '100%',
   },

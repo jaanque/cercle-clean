@@ -19,7 +19,7 @@ export default function Locales() {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 24,
+    marginTop: 20,
     width: '100%',
   },
   listContainer: {

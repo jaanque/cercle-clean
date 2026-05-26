@@ -11,6 +11,7 @@ export default function Sellos() {
 
 const styles = StyleSheet.create({
   container: {
+    marginTop: 20,
     paddingHorizontal: 16,
     width: '100%',
   },
