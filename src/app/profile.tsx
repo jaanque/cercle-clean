@@ -1,10 +1,11 @@
 import React from 'react';
-import { SafeAreaView, StyleSheet, View, ActivityIndicator } from 'react-native';
+import { SafeAreaView, StyleSheet, View } from 'react-native';
 
 import ProfileActions from '@/components/profileScreen/guest/profile-actions';
 import ProfileContent from '@/components/profileScreen/guest/profile-content';
 import ProfileLogged from '@/components/profileScreen/logged/profile-logged';
 import ProfileHeader from '@/components/profileScreen/profile-header';
+import ProfileSkeleton from '@/components/skeletons/profileSkeleton';
 import { Colors } from '@/constants/theme';
 import { useAuth } from '@/providers/AuthProvider';
 
@@ -25,8 +26,8 @@ export default function ProfileScreen() {
         {/* Contenido dinámico o de Carga */}
         <View style={styles.dynamicContent}>
           {isLoading ? (
-            // Spinner de carga mientras comprobamos las credenciales seguras
-            <ActivityIndicator size="large" color={Colors.accent} />
+            // Loader de carga premium animado
+            <ProfileSkeleton />
           ) : user ? (
             // Componente modularizado para Usuario Autenticado
             <ProfileLogged />
