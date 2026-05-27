@@ -38,11 +38,11 @@ export function useStoreDetail(storeId: string) {
       },
     })
       .then(async (response) => {
-        const text = await response.text();
         if (!response.ok) {
-          throw new Error(`Error de servidor (${response.status}): ${text}`);
+          const errorText = await response.text();
+          throw new Error(`Error de servidor (${response.status}): ${errorText}`);
         }
-        return JSON.parse(text);
+        return response.json();
       })
       .then((data) => {
         if (isMounted && data) {

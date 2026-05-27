@@ -47,6 +47,7 @@ export default function LoginForm() {
           errorMsg = 'Error de conexión de red. Revisa tu internet.';
         }
         Alert.alert('Error de acceso', errorMsg);
+        setLoading(false);
       } else {
         Alert.alert('¡Éxito!', '¡Sesión iniciada correctamente!', [
           { text: 'OK', onPress: () => router.replace('/profile') }
@@ -54,7 +55,6 @@ export default function LoginForm() {
       }
     } catch (err: any) {
       Alert.alert('Error', 'Ocurrió un error inesperado al intentar iniciar sesión.');
-    } finally {
       setLoading(false);
     }
   };

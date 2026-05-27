@@ -60,6 +60,7 @@ export default function RegisterForm() {
           errorMsg = 'Error de conexión de red. Revisa tu internet.';
         }
         Alert.alert('Error de registro', errorMsg);
+        setLoading(false);
       } else {
         Alert.alert('¡Cuenta creada!', '¡Te has registrado con éxito!', [
           { text: 'OK', onPress: () => router.replace('/profile') }
@@ -67,7 +68,6 @@ export default function RegisterForm() {
       }
     } catch (err: any) {
       Alert.alert('Error', 'Ocurrió un error inesperado al intentar crear la cuenta.');
-    } finally {
       setLoading(false);
     }
   };
