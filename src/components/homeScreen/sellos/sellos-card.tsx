@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, Text, Pressable } from 'react-native';
 import { SymbolView } from 'expo-symbols';
+import { useRouter } from 'expo-router';
 import { Colors } from '@/constants/theme';
 import Stamp from './stamp';
 import { useAuth } from '@/providers/AuthProvider';
@@ -11,13 +12,20 @@ import { useAuth } from '@/providers/AuthProvider';
  */
 export default function SellosCard({ userStamps }: { userStamps: any[] }) {
   const { user } = useAuth();
+  const router = useRouter();
 
   // Calcular sellos completados de forma modular (máximo de 5)
   const totalStamps = 5;
   const completedCount = user ? Math.min(userStamps.length, totalStamps) : 0;
 
+  const handlePress = () => {
+    if (!user) {
+      router.push('/login');
+    }
+  };
+
   return (
-    <Pressable style={styles.card}>
+    <Pressable style={styles.card} onPress={handlePress}>
       {/* Columna Izquierda: Información de progreso */}
       <View style={styles.leftColumn}>
         <Text style={styles.title}>Tarjeta de sellos</Text>

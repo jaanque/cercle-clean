@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, Platform, Pressable, TextInput } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, Platform, Pressable, TextInput, Linking } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { Colors } from '@/constants/theme';
@@ -9,6 +9,14 @@ import StoreHeader from '@/components/storeDetailScreen/store-header';
 import OfertaCard from '@/components/homeScreen/ofertas/oferta-card';
 import FloatingCart from '@/components/homeScreen/cart/floating-cart';
 import StoreDetailSkeleton from '@/components/skeletons/storeDetailSkeleton';
+import CerclePlusCard from '@/components/homeScreen/cercle-plus/cercle-plus-card';
+import { getStoreDistance } from '@/components/homeScreen/locales/locale-card';
+
+const formatReviewsCount = (reviewsCount: string | undefined | null) => {
+  if (!reviewsCount) return '(2.000)';
+  const numbersOnly = reviewsCount.replace(/[^0-9.,]/g, '');
+  return `(${numbersOnly})`;
+};
 
 /**
  * StoreDetailScreen - Pantalla inmersiva y de alta fidelidad para el detalle de locales.
@@ -20,6 +28,33 @@ export default function StoreDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { store, products, loading, error } = useStoreDetail(id || '');
+
+  const handleOpenMaps = () => {
+    if (!store) return;
+    const { latitude, longitude, name, location } = store;
+    let url = '';
+    
+    if (latitude !== undefined && latitude !== null && longitude !== undefined && longitude !== null) {
+      const latLng = `${latitude},${longitude}`;
+      const label = encodeURIComponent(name);
+      url = Platform.select({
+        ios: `maps://0,0?q=${label}@${latLng}`,
+        android: `geo:0,0?q=${latLng}(${label})`,
+        web: `https://www.google.com/maps/search/?api=1&query=${latLng}`
+      }) || '';
+    } else if (location) {
+      const query = encodeURIComponent(location);
+      url = Platform.select({
+        ios: `maps://0,0?q=${query}`,
+        android: `geo:0,0?q=${query}`,
+        web: `https://www.google.com/maps/search/?api=1&query=${query}`
+      }) || '';
+    }
+
+    if (url) {
+      Linking.openURL(url).catch((err) => console.error("Error opening maps", err));
+    }
+  };
 
   // Consumimos el carrito global sincronizado
   const { cartCount } = useCart();
@@ -43,10 +78,12 @@ export default function StoreDetailScreen() {
   }
 
   if (error || !store) {
+    // Logueamos el error internamente de forma segura para desarrollo
+    if (error) console.error("StoreDetail load error:", error);
     return (
       <View style={styles.errorContainer}>
         <Text style={styles.errorText}>No se pudo cargar la información del local.</Text>
-        <Text style={styles.errorSubtext}>{error || 'El local seleccionado no existe.'}</Text>
+        <Text style={styles.errorSubtext}>El local seleccionado no está disponible en este momento.</Text>
       </View>
     );
   }
@@ -83,7 +120,40 @@ export default function StoreDetailScreen() {
         scrollEventThrottle={16}
       >
         {/* Cabecera Estática Estándar y Segura de Store */}
-        <StoreHeader name={store.name} image={store.image} />
+        <StoreHeader name={store.name} image={store.image} logo={store.logo} />
+
+        {/* Información central de la Tienda (según la referencia visual) */}
+        <View style={styles.storeInfoContainer}>
+          <Text style={styles.storeTitleName}>{store.name}</Text>
+          
+          <View style={styles.statsRow}>
+            <SymbolView
+              name={{ ios: 'star.fill', android: 'star', web: 'star' }}
+              size={13}
+              tintColor="#F5A623"
+            />
+            <Text style={styles.statsText}>
+              {store.rating} {formatReviewsCount(store.reviews_count)} • {getStoreDistance(store)} • Listo en {store.delivery_time || '10-15 min'}
+            </Text>
+          </View>
+          
+          <Pressable 
+            style={({ pressed }) => [styles.locationRow, pressed && { opacity: 0.6 }]} 
+            onPress={handleOpenMaps}
+          >
+            <SymbolView
+              name={{ ios: 'mappin.and.ellipse', android: 'location_on', web: 'location_on' }}
+              size={13}
+              tintColor="#333333"
+            />
+            <Text style={styles.locationText}>Ver ubicación</Text>
+          </Pressable>
+        </View>
+
+        {/* Banner Promocional Cercle+ Reutilizado */}
+        <View style={styles.cerclePlusWrapper}>
+          <CerclePlusCard compact={true} />
+        </View>
 
         {/* Buscador interactivo que sustituye a "Entrantes" */}
         <View style={styles.searchContainer}>
@@ -105,9 +175,14 @@ export default function StoreDetailScreen() {
           />
         </View>
 
+        {/* Separador de Sección */}
+        <View style={styles.sectionHeaderContainer}>
+          <Text style={styles.sectionTitleText}>Salvar excedentes</Text>
+        </View>
+
         {/* --- SECCIÓN: MENÚ GENERAL / ENTRANTES (Vertical) --- */}
         {filteredProducts.length > 0 ? (
-          <View style={[styles.sectionContainer, styles.verticalSectionSpacing]}>
+          <View style={styles.verticalSectionSpacing}>
             <View style={styles.verticalListContainer}>
               {filteredProducts.map((product) => (
                 <OfertaCard
@@ -238,5 +313,55 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#888888',
     fontWeight: '500',
+  },
+  storeInfoContainer: {
+    alignItems: 'center',
+    marginTop: 8,
+    paddingHorizontal: 20,
+    gap: 6,
+  },
+  storeTitleName: {
+    fontSize: 26,
+    fontWeight: '900',
+    color: Colors.text,
+    letterSpacing: -0.5,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  statsText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#333333',
+  },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    opacity: 0.7,
+  },
+  locationText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#555555',
+  },
+  cerclePlusWrapper: {
+    paddingHorizontal: 20,
+    marginTop: 18,
+  },
+  sectionHeaderContainer: {
+    paddingHorizontal: 20,
+    marginTop: 24,
+    marginBottom: 4,
+  },
+  sectionTitleText: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: Colors.text,
+    letterSpacing: -0.3,
   },
 });

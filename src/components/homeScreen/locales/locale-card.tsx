@@ -13,11 +13,40 @@ export interface Store {
   image: string;
   logo?: string;
   tagline?: string;
+  distance?: string;
+  location?: string;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 interface LocaleCardProps {
   locale: Store;
 }
+
+const formatReviewsCount = (reviewsCount: string | undefined | null) => {
+  if (!reviewsCount) return '';
+  const numbersOnly = reviewsCount.replace(/[^0-9.,]/g, '');
+  return `(${numbersOnly})`;
+};
+
+export const getStoreDistance = (store: { latitude?: number | null; longitude?: number | null; distance?: string }) => {
+  if (store.distance) return store.distance;
+  if (store.latitude !== undefined && store.latitude !== null && store.longitude !== undefined && store.longitude !== null) {
+    const userLat = 41.63;
+    const userLon = 0.64;
+    const R = 6371;
+    const dLat = (store.latitude - userLat) * (Math.PI / 180);
+    const dLon = (store.longitude - userLon) * (Math.PI / 180);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(userLat * (Math.PI / 180)) * Math.cos(store.latitude * (Math.PI / 180)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const d = R * c;
+    return `${d.toFixed(1)} km`;
+  }
+  return '--';
+};
 
 export default function LocaleCard({ locale }: LocaleCardProps) {
   const router = useRouter();
@@ -36,7 +65,7 @@ export default function LocaleCard({ locale }: LocaleCardProps) {
             tintColor="#F5A623"
           />
           <Text style={styles.ratingText}>
-            {locale.rating} <Text style={styles.ratingCount}>{locale.reviews_count}</Text>
+            {locale.rating} <Text style={styles.ratingCount}>{formatReviewsCount(locale.reviews_count)}</Text>
           </Text>
         </View>
       </View>
@@ -46,7 +75,7 @@ export default function LocaleCard({ locale }: LocaleCardProps) {
         {/* Row 1: Name and Distance */}
         <View style={styles.row}>
           <Text style={styles.name}>{locale.name}</Text>
-          <Text style={styles.distance}>2.7 km</Text>
+          <Text style={styles.distance}>{getStoreDistance(locale)}</Text>
         </View>
 
         {/* Row 2: Preparation Time */}

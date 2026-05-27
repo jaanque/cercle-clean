@@ -34,6 +34,12 @@ const getSavingAmount = (originalPriceStr: string, priceStr: string): number => 
   return Math.max(0, Math.round(orig - curr));
 };
 
+const formatReviewsCount = (reviewsCount: string | undefined | null) => {
+  if (!reviewsCount) return '';
+  const numbersOnly = reviewsCount.replace(/[^0-9.,]/g, '');
+  return `(${numbersOnly})`;
+};
+
 export default function OfertaCard({ oferta, onProductAdded, onProductRemoved, fullWidth = false }: OfertaCardProps) {
   const router = useRouter();
   const { user, session } = useAuth();
@@ -250,7 +256,7 @@ export default function OfertaCard({ oferta, onProductAdded, onProductRemoved, f
             tintColor="#F5A623"
           />
           <Text style={styles.ratingText}>
-            {oferta.rating} <Text style={styles.ratingCount}>{oferta.reviews_count}</Text>
+            {oferta.rating} <Text style={styles.ratingCount}>{formatReviewsCount(oferta.reviews_count)}</Text>
           </Text>
         </View>
       </View>

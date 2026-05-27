@@ -10,8 +10,34 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
+import { z } from 'zod';
 import { Colors } from '@/constants/theme';
 import { supabaseAuth } from '@/lib/supabase/supabase';
+
+// Sanitizador avanzado nivel Bestia contra SQL Injection, NoSQL Injection y XSS
+const sanitizeInput = (val: string): string => {
+  return val
+    .replace(/['"`;\\-]/g, '') // Elimina comillas, punto y coma, barras diagonales inversas y guiones de comentarios SQL
+    .replace(/[<>]/g, '');     // Filtra corchetes angulares para neutralizar XSS
+};
+
+// Esquema Zod de Validación Estricta para Registro
+const registerSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, { message: 'El nombre debe tener al menos 2 caracteres.' })
+    .max(50, { message: 'El nombre no puede superar los 50 caracteres.' }),
+  email: z
+    .string()
+    .trim()
+    .email({ message: 'El formato del correo electrónico es inválido.' })
+    .max(100, { message: 'El correo electrónico no puede superar los 100 caracteres.' }),
+  password: z
+    .string()
+    .min(6, { message: 'La contraseña debe tener al menos 6 caracteres.' })
+    .max(64, { message: 'La contraseña no puede superar los 64 caracteres.' }),
+});
 
 /**
  * RegisterForm - Formulario de registro de usuario premium y responsivo.
@@ -25,24 +51,32 @@ export default function RegisterForm() {
   const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
-    if (!name.trim() || !email.trim() || !password.trim()) {
-      Alert.alert('Error', 'Por favor, rellena todos los campos.');
-      return;
-    }
+    // Sanitización inicial de todas las entradas
+    const cleanName = sanitizeInput(name.trim());
+    const cleanEmail = sanitizeInput(email.trim());
+    const cleanPassword = sanitizeInput(password);
 
-    if (password.length < 6) {
-      Alert.alert('Error', 'La contraseña debe tener al menos 6 caracteres.');
+    // Validación extrema con Zod
+    const validationResult = registerSchema.safeParse({
+      name: cleanName,
+      email: cleanEmail,
+      password: cleanPassword,
+    });
+
+    if (!validationResult.success) {
+      const errorMsg = validationResult.error.issues[0].message;
+      Alert.alert('Entrada no válida', errorMsg);
       return;
     }
 
     setLoading(true);
     try {
       const { error } = await supabaseAuth.auth.signUp({
-        email: email.trim(),
-        password: password,
+        email: cleanEmail,
+        password: cleanPassword,
         options: {
           data: {
-            full_name: name.trim(),
+            full_name: cleanName,
           },
         },
       });
@@ -63,7 +97,16 @@ export default function RegisterForm() {
         setLoading(false);
       } else {
         Alert.alert('¡Cuenta creada!', '¡Te has registrado con éxito!', [
-          { text: 'OK', onPress: () => router.replace('/profile') }
+          {
+            text: 'OK',
+            onPress: () => {
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.replace('/profile');
+              }
+            }
+          }
         ]);
       }
     } catch (err: unknown) {

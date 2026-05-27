@@ -10,8 +10,29 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
+import { z } from 'zod';
 import { Colors } from '@/constants/theme';
 import { supabaseAuth } from '@/lib/supabase/supabase';
+
+// Sanitizador avanzado nivel Bestia contra SQL Injection, NoSQL Injection y XSS
+const sanitizeInput = (val: string): string => {
+  return val
+    .replace(/['"`;\\-]/g, '') // Elimina comillas, punto y coma, barras diagonales inversas y guiones de comentarios SQL
+    .replace(/[<>]/g, '');     // Filtra corchetes angulares para neutralizar XSS
+};
+
+// Esquema Zod de Validación Estricta
+const loginSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .email({ message: 'El formato del correo electrónico es inválido.' })
+    .max(100, { message: 'El correo electrónico no puede superar los 100 caracteres.' }),
+  password: z
+    .string()
+    .min(6, { message: 'La contraseña debe tener al menos 6 caracteres.' })
+    .max(64, { message: 'La contraseña no puede superar los 64 caracteres.' }),
+});
 
 /**
  * LoginForm - Formulario de inicio de sesión premium y responsivo.
@@ -24,16 +45,27 @@ export default function LoginForm() {
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (!email.trim() || !password.trim()) {
-      Alert.alert('Error', 'Por favor, rellena todos los campos.');
+    // Sanitización inicial
+    const cleanEmail = sanitizeInput(email.trim());
+    const cleanPassword = sanitizeInput(password);
+
+    // Validación extrema con Zod
+    const validationResult = loginSchema.safeParse({
+      email: cleanEmail,
+      password: cleanPassword,
+    });
+
+    if (!validationResult.success) {
+      const errorMsg = validationResult.error.issues[0].message;
+      Alert.alert('Entrada no válida', errorMsg);
       return;
     }
 
     setLoading(true);
     try {
       const { error } = await supabaseAuth.auth.signInWithPassword({
-        email: email.trim(),
-        password: password,
+        email: cleanEmail,
+        password: cleanPassword,
       });
 
       if (error) {
@@ -50,7 +82,16 @@ export default function LoginForm() {
         setLoading(false);
       } else {
         Alert.alert('¡Éxito!', '¡Sesión iniciada correctamente!', [
-          { text: 'OK', onPress: () => router.replace('/profile') }
+          {
+            text: 'OK',
+            onPress: () => {
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.replace('/profile');
+              }
+            }
+          }
         ]);
       }
     } catch (err: unknown) {
