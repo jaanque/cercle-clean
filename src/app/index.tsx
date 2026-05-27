@@ -1,75 +1,38 @@
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, View } from 'react-native';
+import React from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import CerclePlus from '@/components/homeScreen/cercle-plus/cercle-plus';
 import Header from '@/components/homeScreen/header/header';
-import { Store } from '@/components/homeScreen/locales/locale-card';
 import Locales from '@/components/homeScreen/locales/locales';
-import { Product } from '@/components/homeScreen/ofertas/oferta-card';
 import Ofertas from '@/components/homeScreen/ofertas/ofertas';
 import Sellos from '@/components/homeScreen/sellos/sellos';
-import { useAuth } from '@/providers/AuthProvider';
+import { useHomeData } from '@/hooks/useHomeData';
 
+/**
+ * HomeScreen - Pantalla principal de inicio.
+ * Es un componente visual "declarativo" y limpio.
+ * Delega la lógica de red y estado de datos al hook personalizado useHomeData.
+ */
 export default function HomeScreen() {
-  // ==========================================
-  // 1. ESTADOS LOCALES (STATE MANAGEMENT)
-  // ==========================================
-  const [stores, setStores] = useState<Store[]>([]);       // Listado de tiendas (Locales)
-  const [ofertas, setOfertas] = useState<Product[]>([]);   // Listado de productos (Ofertas)
-  const [loading, setLoading] = useState<boolean>(true);   // Indicador de carga asíncrona
+  const { stores, ofertas, loading, error } = useHomeData();
 
-  // Consumimos el contexto de sesión real global
-  const { session } = useAuth();
-
-  // ==========================================
-  // 2. EFECTOS (NETWORK PETITIONS)
-  // ==========================================
-  useEffect(() => {
-    setLoading(true);
-    // Recuperamos la base de la URL y la clave pública protegida desde las variables de entorno
-    const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
-    const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
-
-    // Enviar el token JWT real del usuario si está logueado, sino usar la Anon Key
-    const authorizationToken = session?.access_token || supabaseAnonKey;
-
-    // Petición única optimizada para recuperar todo el contenido dinámico (construida dinámicamente)
-    fetch(`${supabaseUrl}/functions/v1/select-stores`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authorizationToken}`
-      }
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data) {
-          // Asignación de datos recibidos a los estados tipados correspondientes
-          setStores(data.stores || []);
-          setOfertas(data.products || []);
-        }
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error('Error fetching data from Supabase Edge Function:', error);
-        setLoading(false);
-      });
-  }, [session]); // Reactivo a los cambios de sesión (Login/Logout) para actualizar el pasaporte de acceso de inmediato
-
-  // ==========================================
-  // 3. RENDERIZADO DE INTERFAZ (UI RENDER)
-  // ==========================================
   return (
     <>
       {/* Cabecera Estática / Barra de Búsqueda y Perfil */}
       <Header />
 
       {/* Contenedor con Scroll Vertical para Contenido Dinámico */}
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {loading ? (
           // Spinner de carga con color corporativo
-          <View style={{ marginTop: 40, alignItems: 'center' }}>
+          <View style={styles.centeredContainer}>
             <ActivityIndicator size="large" color="#5B2333" />
+          </View>
+        ) : error ? (
+          // Mensaje visual elegante de error de red
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>No se pudieron cargar los datos.</Text>
+            <Text style={styles.errorSubtext}>Revisa tu conexión a internet e inténtalo de nuevo.</Text>
           </View>
         ) : (
           // Vista principal secuencial ordenada con espaciados unificados de 20px
@@ -91,3 +54,30 @@ export default function HomeScreen() {
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  scrollContent: {
+    paddingBottom: 32,
+  },
+  centeredContainer: {
+    marginTop: 40,
+    alignItems: 'center',
+  },
+  errorContainer: {
+    marginTop: 60,
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    gap: 8,
+  },
+  errorText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    textAlign: 'center',
+  },
+  errorSubtext: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+  },
+});
