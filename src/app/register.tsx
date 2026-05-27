@@ -1,14 +1,26 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import RegisterForm from '@/components/profileScreen/register/register-form';
 import { Colors } from '@/constants/theme';
+import { useAuth } from '@/providers/AuthProvider';
 
 /**
- * RegisterScreen - Pantalla limpia de registro de cuenta.
- * Solo contiene los imports modulares, SafeAreaView y controles de scroll con teclado adaptativo.
+ * RegisterScreen - Pantalla de registro de cuenta con escudo de navegación (Route Guard).
+ * Evita accesos redundantes redirigiendo automáticamente si hay una sesión activa.
  */
 export default function RegisterScreen() {
+  const router = useRouter();
+  const { user } = useAuth();
+
+  // Escudo de navegación (Route Guard)
+  useEffect(() => {
+    if (user) {
+      router.replace('/profile');
+    }
+  }, [user]);
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView

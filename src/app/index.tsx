@@ -8,6 +8,7 @@ import Locales from '@/components/homeScreen/locales/locales';
 import { Product } from '@/components/homeScreen/ofertas/oferta-card';
 import Ofertas from '@/components/homeScreen/ofertas/ofertas';
 import Sellos from '@/components/homeScreen/sellos/sellos';
+import { useAuth } from '@/providers/AuthProvider';
 
 export default function HomeScreen() {
   // ==========================================
@@ -17,19 +18,27 @@ export default function HomeScreen() {
   const [ofertas, setOfertas] = useState<Product[]>([]);   // Listado de productos (Ofertas)
   const [loading, setLoading] = useState<boolean>(true);   // Indicador de carga asíncrona
 
+  // Consumimos el contexto de sesión real global
+  const { session } = useAuth();
+
   // ==========================================
   // 2. EFECTOS (NETWORK PETITIONS)
   // ==========================================
   useEffect(() => {
-    // Recuperamos la clave pública protegida desde el entorno local seguro
+    setLoading(true);
+    // Recuperamos la base de la URL y la clave pública protegida desde las variables de entorno
+    const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
     const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
 
-    // Petición única optimizada para recuperar todo el contenido dinámico
-    fetch('https://icjheiuqbgaozzmgdmpg.supabase.co/functions/v1/select-stores', {
+    // Enviar el token JWT real del usuario si está logueado, sino usar la Anon Key
+    const authorizationToken = session?.access_token || supabaseAnonKey;
+
+    // Petición única optimizada para recuperar todo el contenido dinámico (construida dinámicamente)
+    fetch(`${supabaseUrl}/functions/v1/select-stores`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabaseAnonKey}`
+        'Authorization': `Bearer ${authorizationToken}`
       }
     })
       .then((response) => response.json())
@@ -45,7 +54,7 @@ export default function HomeScreen() {
         console.error('Error fetching data from Supabase Edge Function:', error);
         setLoading(false);
       });
-  }, []);
+  }, [session]); // Reactivo a los cambios de sesión (Login/Logout) para actualizar el pasaporte de acceso de inmediato
 
   // ==========================================
   // 3. RENDERIZADO DE INTERFAZ (UI RENDER)
