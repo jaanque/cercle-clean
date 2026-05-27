@@ -139,18 +139,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 110, // Espaciado extra para evitar solapamiento con el carrito flotante
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: '#ffffff',
-  },
-  loadingText: {
-    fontSize: 16,
-    color: '#888888',
-    fontWeight: '600',
-  },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -175,29 +163,6 @@ const styles = StyleSheet.create({
   },
   verticalSectionSpacing: {
     paddingHorizontal: 20,
-  },
-  sectionHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: Colors.text,
-    letterSpacing: -0.3,
-  },
-  seeAllText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: Colors.accent,
-  },
-  horizontalScrollPadding: {
-    paddingLeft: 20,
-    paddingRight: 6,
-    paddingBottom: 12, // Evita cortar sombras de los botones plus flotantes
   },
   verticalListContainer: {
     marginTop: 8,
