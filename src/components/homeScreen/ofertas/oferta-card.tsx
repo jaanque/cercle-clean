@@ -4,6 +4,8 @@ import { SymbolView } from 'expo-symbols';
 import { useRouter } from 'expo-router';
 import { Colors } from '@/constants/theme';
 import { useAuth } from '@/providers/AuthProvider';
+import { cartSyncSchema, cartDeleteSchema } from '@/lib/schemas/cart';
+
 
 export interface Product {
   id: string;
@@ -76,6 +78,18 @@ export default function OfertaCard({ oferta, onProductAdded, onProductRemoved }:
 
   // Lógica para enviar la cantidad total al servidor (Upsert)
   const syncCartQuantity = async (targetQty: number) => {
+    // Validación extrema en frontend (Búnker) con Zod
+    const validation = cartSyncSchema.safeParse({
+      product_id: oferta.id,
+      quantity: targetQty,
+    });
+
+    if (!validation.success) {
+      // Abortamos la llamada antes de hacer uso de la red
+      const errorMsg = validation.error.issues.map(issue => issue.message).join('\n');
+      throw new Error(errorMsg);
+    }
+
     const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
     const response = await fetch(`${supabaseUrl}/functions/v1/select-stores`, {
       method: 'POST',
@@ -83,10 +97,7 @@ export default function OfertaCard({ oferta, onProductAdded, onProductRemoved }:
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${session?.access_token}`,
       },
-      body: JSON.stringify({
-        product_id: oferta.id,
-        quantity: targetQty,
-      }),
+      body: JSON.stringify(validation.data), // Datos perfectamente validados y tipados
     });
 
     const result = await response.json();
@@ -101,6 +112,16 @@ export default function OfertaCard({ oferta, onProductAdded, onProductRemoved }:
 
   // Lógica para eliminar el producto por completo de la base de datos (DELETE)
   const deleteFromCartAPI = async () => {
+    // Validación extrema en frontend (Búnker) con Zod
+    const validation = cartDeleteSchema.safeParse({
+      product_id: oferta.id,
+    });
+
+    if (!validation.success) {
+      const errorMsg = validation.error.issues.map(issue => issue.message).join('\n');
+      throw new Error(errorMsg);
+    }
+
     const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
     const response = await fetch(`${supabaseUrl}/functions/v1/select-stores`, {
       method: 'DELETE',
@@ -108,9 +129,7 @@ export default function OfertaCard({ oferta, onProductAdded, onProductRemoved }:
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${session?.access_token}`,
       },
-      body: JSON.stringify({
-        product_id: oferta.id,
-      }),
+      body: JSON.stringify(validation.data), // Datos perfectamente validados y tipados
     });
 
     const result = await response.json();
