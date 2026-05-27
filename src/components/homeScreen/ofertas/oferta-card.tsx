@@ -23,6 +23,7 @@ interface OfertaCardProps {
   oferta: Product;
   onProductAdded?: () => void;
   onProductRemoved?: (quantity: number) => void;
+  fullWidth?: boolean;
 }
 
 // Helper to compute savings amount from price strings (e.g. "120 €" - "45 €" = 75)
@@ -32,7 +33,7 @@ const getSavingAmount = (originalPriceStr: string, priceStr: string): number => 
   return Math.max(0, Math.round(orig - curr));
 };
 
-export default function OfertaCard({ oferta, onProductAdded, onProductRemoved }: OfertaCardProps) {
+export default function OfertaCard({ oferta, onProductAdded, onProductRemoved, fullWidth = false }: OfertaCardProps) {
   const router = useRouter();
   const { user, session } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -218,7 +219,7 @@ export default function OfertaCard({ oferta, onProductAdded, onProductRemoved }:
   };
 
   return (
-    <Pressable style={styles.card}>
+    <Pressable style={[styles.card, fullWidth && styles.fullWidthCard]}>
       {/* Image Area with Badges */}
       <View style={styles.imageContainer}>
         <Image source={{ uri: oferta.image }} style={styles.image} />
@@ -323,6 +324,11 @@ const styles = StyleSheet.create({
   card: {
     width: 270,
     marginRight: 16,
+  },
+  fullWidthCard: {
+    width: '100%',
+    marginRight: 0,
+    marginBottom: 20, // Aireado simétrico de 20px idéntico a las secciones
   },
   imageContainer: {
     width: '100%',

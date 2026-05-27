@@ -3,7 +3,11 @@ import { View, StyleSheet, Text, Pressable } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import { Colors } from '@/constants/theme';
 
-export default function CerclePlusCard() {
+interface CerclePlusCardProps {
+  compact?: boolean;
+}
+
+export default function CerclePlusCard({ compact = false }: CerclePlusCardProps) {
   const features = [
     'Sin comisiones en tus pedidos',
     'Acceso exclusivo e ilimitado a Cercle AI',
@@ -11,9 +15,9 @@ export default function CerclePlusCard() {
   ];
 
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, compact && styles.compactCard]}>
       {/* Header Row */}
-      <View style={styles.headerRow}>
+      <View style={[styles.headerRow, compact && styles.compactHeaderRow]}>
         <View style={styles.logoContainer}>
           <Text style={styles.logoText}>Cercle</Text>
           <View style={styles.plusBadge}>
@@ -26,22 +30,24 @@ export default function CerclePlusCard() {
         </Pressable>
       </View>
 
-      {/* Features List */}
-      <View style={styles.featuresList}>
-        {features.map((feature, index) => (
-          <View key={index} style={styles.featureItem}>
-            <View style={styles.checkBadge}>
-              <SymbolView
-                name={{ ios: 'checkmark', android: 'check', web: 'check' }}
-                size={10}
-                tintColor="#ffffff"
-                weight="bold"
-              />
+      {/* Features List (Hided when compact is true) */}
+      {!compact && (
+        <View style={styles.featuresList}>
+          {features.map((feature, index) => (
+            <View key={index} style={styles.featureItem}>
+              <View style={styles.checkBadge}>
+                <SymbolView
+                  name={{ ios: 'checkmark', android: 'check', web: 'check' }}
+                  size={10}
+                  tintColor="#ffffff"
+                  weight="bold"
+                />
+              </View>
+              <Text style={styles.featureText}>{feature}</Text>
             </View>
-            <Text style={styles.featureText}>{feature}</Text>
-          </View>
-        ))}
-      </View>
+          ))}
+        </View>
+      )}
     </View>
   );
 }
@@ -118,5 +124,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#4A5568',
     fontWeight: '500',
+  },
+  compactCard: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 22,
+  },
+  compactHeaderRow: {
+    marginBottom: 0, // No bottom margin because there are no features below it
   },
 });

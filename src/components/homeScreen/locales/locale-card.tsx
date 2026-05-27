@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, Text, Image, Pressable } from 'react-native';
 import { SymbolView } from 'expo-symbols';
+import { useRouter } from 'expo-router';
 import { Colors } from '@/constants/theme';
 
 export interface Store {
@@ -19,8 +20,10 @@ interface LocaleCardProps {
 }
 
 export default function LocaleCard({ locale }: LocaleCardProps) {
+  const router = useRouter();
+
   return (
-    <Pressable style={styles.card}>
+    <Pressable style={styles.card} onPress={() => router.push(`/store/${locale.id}`)}>
       {/* Big Image Container with Rating Badge */}
       <View style={styles.imageContainer}>
         <Image source={{ uri: locale.image }} style={styles.image} />
