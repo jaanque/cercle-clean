@@ -23,38 +23,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!session) {
       setCartItems({});
-      return;
     }
-
-    // Inicializar el carrito haciendo una consulta a select-stores para ver si hay un conteo previo
-    const initializeCartFromAPI = async () => {
-      try {
-        const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
-        const response = await fetch(`${supabaseUrl}/functions/v1/select-stores`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-        });
-        if (response.ok) {
-          const data = await response.json();
-          if (data && Array.isArray(data.cart_items)) {
-            const itemsMap: Record<string, number> = {};
-            data.cart_items.forEach((item: any) => {
-              if (item.product_id) {
-                itemsMap[item.product_id] = item.quantity || 0;
-              }
-            });
-            setCartItems(itemsMap);
-          }
-        }
-      } catch (err) {
-        console.warn('Error al recuperar estado inicial del carrito en el proveedor:', err);
-      }
-    };
-
-    initializeCartFromAPI();
   }, [session]);
 
   const updateProductQuantity = (productId: string, quantity: number) => {

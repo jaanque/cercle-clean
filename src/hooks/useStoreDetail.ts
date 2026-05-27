@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/providers/AuthProvider';
+import { useCart } from '@/providers/CartProvider';
 import { Store } from '@/components/homeScreen/locales/locale-card';
 import { Product } from '@/components/homeScreen/ofertas/oferta-card';
 
@@ -16,6 +17,7 @@ export function useStoreDetail(storeId: string) {
   const [error, setError] = useState<string | null>(null);
 
   const { session } = useAuth();
+  const { setCartItems } = useCart();
 
   useEffect(() => {
     if (!storeId) return;
@@ -44,10 +46,21 @@ export function useStoreDetail(storeId: string) {
       })
       .then((data) => {
         if (isMounted && data) {
-          // La Edge Function con storeId filtrado ya devuelve la tienda concreta y sus productos
+          // La Edge Function con storeId filtrado ya devuelve la tienda concreta, sus productos y el carrito
           const currentStore = data.stores?.[0] || null;
           setStore(currentStore);
           setProducts(data.products || []);
+
+          // Sincronizar el mapa del carrito si viene en los datos del GET
+          if (data && Array.isArray(data.cart_items)) {
+            const itemsMap: Record<string, number> = {};
+            data.cart_items.forEach((item: any) => {
+              if (item.product_id) {
+                itemsMap[item.product_id] = item.quantity || 0;
+              }
+            });
+            setCartItems(itemsMap);
+          }
         }
       })
       .catch((err) => {
@@ -64,7 +77,7 @@ export function useStoreDetail(storeId: string) {
     return () => {
       isMounted = false;
     };
-  }, [storeId, session]);
+  }, [storeId, session, setCartItems]);
 
   return {
     store,
