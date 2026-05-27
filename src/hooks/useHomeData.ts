@@ -13,6 +13,7 @@ import { Product } from '@/components/homeScreen/ofertas/oferta-card';
 export function useHomeData() {
   const [stores, setStores] = useState<Store[]>([]);
   const [ofertas, setOfertas] = useState<Product[]>([]);
+  const [userStamps, setUserStamps] = useState<any[]>([]); // Sellos del usuario autenticado
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,6 +49,7 @@ export function useHomeData() {
         if (isMounted && data) {
           setStores(data.stores || []);
           setOfertas(data.products || []);
+          setUserStamps(data.user_stamps || []); // Guardamos los sellos obtenidos de forma segura
         }
       })
       .catch((err) => {
@@ -66,5 +68,5 @@ export function useHomeData() {
     };
   }, [session]); // Reactivo a la sesión (Login/Logout)
 
-  return { stores, ofertas, loading, error };
+  return { stores, ofertas, userStamps, loading, error };
 }

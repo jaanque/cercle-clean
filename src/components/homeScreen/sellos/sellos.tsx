@@ -6,10 +6,10 @@ import SellosCard from './sellos-card';
  * Sellos - Componente wrapper de la sección de la Tarjeta de Sellos.
  * Actúa como orquestador estético manejando el espaciado simétrico exterior (marginTop: 20).
  */
-export default function Sellos() {
+export default function Sellos({ userStamps }: { userStamps: any[] }) {
   return (
     <View style={styles.container}>
-      <SellosCard />
+      <SellosCard userStamps={userStamps} />
     </View>
   );
 }
@@ -21,4 +21,3 @@ const styles = StyleSheet.create({
     width: '100%',
   },
 });
-

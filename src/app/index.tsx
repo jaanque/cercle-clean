@@ -14,7 +14,7 @@ import { useHomeData } from '@/hooks/useHomeData';
  * Delega la lógica de red y estado de datos al hook personalizado useHomeData.
  */
 export default function HomeScreen() {
-  const { stores, ofertas, loading, error } = useHomeData();
+  const { stores, ofertas, userStamps, loading, error } = useHomeData();
 
   return (
     <>
@@ -37,8 +37,8 @@ export default function HomeScreen() {
         ) : (
           // Vista principal secuencial ordenada con espaciados unificados de 20px
           <>
-            {/* Tarjeta de Sellos del Usuario */}
-            <Sellos />
+            {/* Tarjeta de Sellos del Usuario (alimentada dinámicamente) */}
+            <Sellos userStamps={userStamps} />
 
             {/* Listado Horizontal de Ofertas/Productos dinámicos */}
             <Ofertas ofertas={ofertas} />
