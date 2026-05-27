@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, ActivityIndicator, Platform, Pressable } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, Platform, Pressable, TextInput } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { Colors } from '@/constants/theme';
@@ -7,6 +7,7 @@ import { useStoreDetail } from '@/hooks/useStoreDetail';
 import StoreHeader from '@/components/storeDetailScreen/store-header';
 import OfertaCard from '@/components/homeScreen/ofertas/oferta-card';
 import FloatingCart from '@/components/homeScreen/cart/floating-cart';
+import StoreDetailSkeleton from '@/components/skeletons/storeDetailSkeleton';
 
 /**
  * StoreDetailScreen - Pantalla inmersiva y de alta fidelidad para el detalle de locales.
@@ -23,6 +24,8 @@ export default function StoreDetailScreen() {
   const [cartCount, setCartCount] = useState<number>(0);
   // Estado para controlar la visibilidad de la barra de navegación pegajosa en scroll
   const [showStickyHeader, setShowStickyHeader] = useState(false);
+  // Estado para la búsqueda de productos
+  const [searchQuery, setSearchQuery] = useState('');
 
   const incrementCart = () => setCartCount((prev) => prev + 1);
   const decrementCart = () => setCartCount((prev) => Math.max(0, prev - 1));
@@ -38,12 +41,7 @@ export default function StoreDetailScreen() {
   };
 
   if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.accent} />
-        <Text style={styles.loadingText}>Cargando local...</Text>
-      </View>
-    );
+    return <StoreDetailSkeleton />;
   }
 
   if (error || !store) {
@@ -54,6 +52,11 @@ export default function StoreDetailScreen() {
       </View>
     );
   }
+
+  // Filtrado dinámico de productos basado en la búsqueda
+  const filteredProducts = products.filter((product) =>
+    product.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <View style={styles.screenContainer}>
@@ -84,11 +87,31 @@ export default function StoreDetailScreen() {
         {/* Cabecera Estática Estándar y Segura de Store */}
         <StoreHeader name={store.name} image={store.image} />
 
+        {/* Buscador interactivo que sustituye a "Entrantes" */}
+        <View style={styles.searchContainer}>
+          <SymbolView
+            name={{ ios: 'magnifyingglass', android: 'search', web: 'search' }}
+            size={18}
+            tintColor="#9EA8B6"
+            style={styles.searchIcon}
+          />
+          <TextInput
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder="Buscar productos..."
+            placeholderTextColor="#9EA8B6"
+            style={styles.searchInput}
+            clearButtonMode="while-editing"
+            autoCorrect={false}
+            autoCapitalize="none"
+          />
+        </View>
+
         {/* --- SECCIÓN: MENÚ GENERAL / ENTRANTES (Vertical) --- */}
-        {products.length > 0 && (
+        {filteredProducts.length > 0 ? (
           <View style={[styles.sectionContainer, styles.verticalSectionSpacing]}>
             <View style={styles.verticalListContainer}>
-              {products.map((product) => (
+              {filteredProducts.map((product) => (
                 <OfertaCard
                   key={product.id}
                   oferta={product}
@@ -98,6 +121,10 @@ export default function StoreDetailScreen() {
                 />
               ))}
             </View>
+          </View>
+        ) : (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No se encontraron productos</Text>
           </View>
         )}
       </ScrollView>
@@ -217,5 +244,38 @@ const styles = StyleSheet.create({
   },
   stickyRightSpacer: {
     width: 36, // Balancea exactamente el ancho del botón volver para centrar el título perfectamente
+  },
+  searchContainer: {
+    height: 50,
+    borderRadius: 22,
+    backgroundColor: Colors.background2,
+    borderWidth: 1,
+    borderColor: '#EAEAEA',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 18,
+    marginHorizontal: 20,
+    marginTop: 20,
+    marginBottom: 8,
+  },
+  searchIcon: {
+    marginRight: 10,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
+    color: Colors.text,
+    fontWeight: '400',
+    paddingVertical: 8,
+  },
+  emptyContainer: {
+    paddingVertical: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyText: {
+    fontSize: 15,
+    color: '#888888',
+    fontWeight: '500',
   },
 });
