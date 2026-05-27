@@ -167,8 +167,9 @@ export default function OfertaCard({ oferta, onProductAdded, onProductRemoved, f
     try {
       await syncCartQuantity(1);
       setQuantity(1);
-    } catch (err: any) {
-      Alert.alert('Error', err.message || 'No se pudo añadir el producto al carrito.');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'No se pudo añadir el producto al carrito.';
+      Alert.alert('Error', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -185,8 +186,9 @@ export default function OfertaCard({ oferta, onProductAdded, onProductRemoved, f
     try {
       await syncCartQuantity(newQty);
       setQuantity(newQty);
-    } catch (err: any) {
-      Alert.alert('Error', err.message || 'No se pudo actualizar el carrito.');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'No se pudo actualizar el carrito.';
+      Alert.alert('Error', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -205,8 +207,9 @@ export default function OfertaCard({ oferta, onProductAdded, onProductRemoved, f
         await syncCartQuantity(newQty);
         setQuantity(newQty);
       }
-    } catch (err: any) {
-      Alert.alert('Error', err.message || 'No se pudo actualizar el carrito.');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'No se pudo actualizar el carrito.';
+      Alert.alert('Error', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -218,8 +221,9 @@ export default function OfertaCard({ oferta, onProductAdded, onProductRemoved, f
       // Eliminar el producto por completo de la base de datos
       await deleteFromCartAPI();
       setQuantity(0);
-    } catch (err: any) {
-      Alert.alert('Error', err.message || 'No se pudo eliminar el producto del carrito.');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'No se pudo eliminar el producto del carrito.';
+      Alert.alert('Error', errorMessage);
     } finally {
       setLoading(false);
     }

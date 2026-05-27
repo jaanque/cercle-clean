@@ -38,12 +38,12 @@ export default function LoginForm() {
 
       if (error) {
         let errorMsg = 'No se pudo iniciar sesión. Por favor, inténtalo de nuevo.';
-        const msg = error.message.toLowerCase();
-        if (msg.includes('invalid login credentials') || msg.includes('invalid credentials')) {
+        // Evaluamos códigos de error estandarizados y HTTP status para una robustez total
+        if (error.status === 400 && (error.code === 'invalid_credentials' || error.message.toLowerCase().includes('credentials'))) {
           errorMsg = 'El correo electrónico o la contraseña son incorrectos.';
-        } else if (msg.includes('email not confirmed')) {
+        } else if (error.status === 400 && error.code === 'email_not_confirmed') {
           errorMsg = 'Por favor, confirma tu correo electrónico antes de iniciar sesión.';
-        } else if (msg.includes('network') || msg.includes('connection')) {
+        } else if (!error.status) {
           errorMsg = 'Error de conexión de red. Revisa tu internet.';
         }
         Alert.alert('Error de acceso', errorMsg);
@@ -53,7 +53,7 @@ export default function LoginForm() {
           { text: 'OK', onPress: () => router.replace('/profile') }
         ]);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       Alert.alert('Error', 'Ocurrió un error inesperado al intentar iniciar sesión.');
       setLoading(false);
     }

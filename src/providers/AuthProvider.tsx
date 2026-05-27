@@ -95,8 +95,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) {
         throw error;
       }
-    } catch (err: any) {
-      console.error('Error al cerrar sesión:', err.message);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
+      console.error('Error al cerrar sesión:', errorMessage);
     } finally {
       setSession(null);
       setUser(null);

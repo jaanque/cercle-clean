@@ -49,14 +49,14 @@ export default function RegisterForm() {
 
       if (error) {
         let errorMsg = 'Hubo un problema al crear tu cuenta. Por favor, inténtalo de nuevo.';
-        const msg = error.message.toLowerCase();
-        if (msg.includes('already registered') || msg.includes('email_taken') || msg.includes('already exists')) {
+        // Evaluamos códigos de error estandarizados y HTTP status para una robustez total
+        if (error.status === 422 && (error.code === 'user_already_exists' || error.message.toLowerCase().includes('exists') || error.message.toLowerCase().includes('registered'))) {
           errorMsg = 'Este correo electrónico ya está registrado.';
-        } else if (msg.includes('invalid email') || msg.includes('email address is invalid')) {
+        } else if (error.status === 400 && (error.code === 'validation_failed' || error.message.toLowerCase().includes('email'))) {
           errorMsg = 'El formato del correo electrónico no es válido.';
-        } else if (msg.includes('password should be at least')) {
+        } else if (error.status === 400 && error.message.toLowerCase().includes('password')) {
           errorMsg = 'La contraseña es demasiado corta (mínimo 6 caracteres).';
-        } else if (msg.includes('network') || msg.includes('connection')) {
+        } else if (!error.status) {
           errorMsg = 'Error de conexión de red. Revisa tu internet.';
         }
         Alert.alert('Error de registro', errorMsg);
@@ -66,7 +66,7 @@ export default function RegisterForm() {
           { text: 'OK', onPress: () => router.replace('/profile') }
         ]);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       Alert.alert('Error', 'Ocurrió un error inesperado al intentar crear la cuenta.');
       setLoading(false);
     }
