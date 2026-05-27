@@ -3,6 +3,7 @@ import { View } from 'react-native';
 
 import { Colors } from '@/constants/theme';
 import { AuthProvider } from '@/providers/AuthProvider';
+import { CartProvider } from '@/providers/CartProvider';
 
 /**
  * RootLayout - Layout raíz global de la aplicación.
@@ -12,10 +13,12 @@ import { AuthProvider } from '@/providers/AuthProvider';
 export default function RootLayout() {
   return (
     <AuthProvider>
-      {/* Contenedor principal que previene pantallas negras y aplica el color de fondo primario (#ffffff) */}
-      <View style={{ flex: 1, backgroundColor: Colors.background1 }}>
-        <Slot />
-      </View>
+      <CartProvider>
+        {/* Contenedor principal que previene pantallas negras y aplica el color de fondo primario (#ffffff) */}
+        <View style={{ flex: 1, backgroundColor: Colors.background1 }}>
+          <Slot />
+        </View>
+      </CartProvider>
     </AuthProvider>
   );
 }

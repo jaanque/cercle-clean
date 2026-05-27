@@ -23,8 +23,6 @@ export default function HomeScreen() {
     cartCount, 
     loading, 
     error,
-    incrementCartCount,
-    decrementCartCount 
   } = useHomeData();
 
   return (
@@ -52,8 +50,6 @@ export default function HomeScreen() {
             {/* Listado Horizontal de Ofertas/Productos dinámicos */}
             <Ofertas 
               ofertas={ofertas} 
-              onProductAdded={() => incrementCartCount(1)} 
-              onProductRemoved={decrementCartCount} 
             />
 
             {/* Banner Informativo CerclePlus */}

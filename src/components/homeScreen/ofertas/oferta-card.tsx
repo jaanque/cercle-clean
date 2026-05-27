@@ -4,6 +4,7 @@ import { SymbolView } from 'expo-symbols';
 import { useRouter } from 'expo-router';
 import { Colors } from '@/constants/theme';
 import { useAuth } from '@/providers/AuthProvider';
+import { useCart } from '@/providers/CartProvider';
 import { cartSyncSchema, cartDeleteSchema } from '@/lib/schemas/cart';
 
 
@@ -37,7 +38,13 @@ export default function OfertaCard({ oferta, onProductAdded, onProductRemoved, f
   const router = useRouter();
   const { user, session } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [quantity, setQuantity] = useState(0); // Cantidad agregada al carrito
+  
+  // Consumimos el estado del carrito global sincronizado por producto
+  const { cartItems, updateProductQuantity } = useCart();
+  const quantity = cartItems[oferta.id] || 0;
+  const setQuantity = (newQty: number) => {
+    updateProductQuantity(oferta.id, newQty);
+  };
 
   // Valores de animación para la transición del número de cantidad
   const translateY = useRef(new Animated.Value(0)).current;

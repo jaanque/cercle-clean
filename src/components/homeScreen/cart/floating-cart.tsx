@@ -14,17 +14,19 @@ interface FloatingCartProps {
  * Se adapta perfectamente al color corporativo de la aplicación (Colors.accent).
  */
 export default function FloatingCart({ count, onPress }: FloatingCartProps) {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(25)).current;
+  const [shouldRender, setShouldRender] = React.useState(count > 0);
+  const fadeAnim = useRef(new Animated.Value(count > 0 ? 1 : 0)).current;
+  const slideAnim = useRef(new Animated.Value(count > 0 ? 0 : 25)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     if (count > 0) {
+      setShouldRender(true);
       // Animación suave de entrada (fade-in + slide-up)
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
-          duration: 350,
+          duration: 300,
           useNativeDriver: true,
         }),
         Animated.spring(slideAnim, {
@@ -49,10 +51,26 @@ export default function FloatingCart({ count, onPress }: FloatingCartProps) {
           useNativeDriver: true,
         }),
       ]).start();
+    } else {
+      // Animación suave de salida (fade-out + slide-down) antes de desmontar
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 30,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        setShouldRender(false);
+      });
     }
   }, [count]);
 
-  if (count <= 0) return null;
+  if (!shouldRender) return null;
 
   return (
     <Animated.View 

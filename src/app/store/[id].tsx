@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { Colors } from '@/constants/theme';
 import { useStoreDetail } from '@/hooks/useStoreDetail';
+import { useCart } from '@/providers/CartProvider';
 import StoreHeader from '@/components/storeDetailScreen/store-header';
 import OfertaCard from '@/components/homeScreen/ofertas/oferta-card';
 import FloatingCart from '@/components/homeScreen/cart/floating-cart';
@@ -20,15 +21,12 @@ export default function StoreDetailScreen() {
   const router = useRouter();
   const { store, products, loading, error } = useStoreDetail(id || '');
 
-  // Estado local para el contador del carrito reactivo en la UI
-  const [cartCount, setCartCount] = useState<number>(0);
+  // Consumimos el carrito global sincronizado
+  const { cartCount } = useCart();
   // Estado para controlar la visibilidad de la barra de navegación pegajosa en scroll
   const [showStickyHeader, setShowStickyHeader] = useState(false);
   // Estado para la búsqueda de productos
   const [searchQuery, setSearchQuery] = useState('');
-
-  const incrementCart = () => setCartCount((prev) => prev + 1);
-  const decrementCart = () => setCartCount((prev) => Math.max(0, prev - 1));
 
   const handleScroll = (event: any) => {
     const offsetY = event.nativeEvent.contentOffset.y;
@@ -115,8 +113,6 @@ export default function StoreDetailScreen() {
                 <OfertaCard
                   key={product.id}
                   oferta={product}
-                  onProductAdded={incrementCart}
-                  onProductRemoved={decrementCart}
                   fullWidth={true}
                 />
               ))}
