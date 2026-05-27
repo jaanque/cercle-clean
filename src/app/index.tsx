@@ -1,20 +1,31 @@
 import React from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import CerclePlus from '@/components/homeScreen/cercle-plus/cercle-plus';
 import Header from '@/components/homeScreen/header/header';
 import Locales from '@/components/homeScreen/locales/locales';
 import Ofertas from '@/components/homeScreen/ofertas/ofertas';
 import Sellos from '@/components/homeScreen/sellos/sellos';
+import FloatingCart from '@/components/homeScreen/cart/floating-cart';
+import HomeSkeleton from '@/components/skeletons/homeSkeleton';
 import { useHomeData } from '@/hooks/useHomeData';
 
 /**
  * HomeScreen - Pantalla principal de inicio.
- * Es un componente visual "declarativo" y limpio.
- * Delega la lógica de red y estado de datos al hook personalizado useHomeData.
+ * Es un componente visual "escaparate" 100% declarativo y libre de lógica.
+ * Consume los datos y el estado dinámico directamente de useHomeData.
  */
 export default function HomeScreen() {
-  const { stores, ofertas, userStamps, loading, error } = useHomeData();
+  const { 
+    stores, 
+    ofertas, 
+    userStamps, 
+    cartCount, 
+    loading, 
+    error,
+    incrementCartCount,
+    decrementCartCount 
+  } = useHomeData();
 
   return (
     <>
@@ -24,10 +35,8 @@ export default function HomeScreen() {
       {/* Contenedor con Scroll Vertical para Contenido Dinámico */}
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {loading ? (
-          // Spinner de carga con color corporativo
-          <View style={styles.centeredContainer}>
-            <ActivityIndicator size="large" color="#5B2333" />
-          </View>
+          // Skeleton Loader de pulso premium y ultra realista
+          <HomeSkeleton />
         ) : error ? (
           // Mensaje visual elegante de error de red
           <View style={styles.errorContainer}>
@@ -41,7 +50,11 @@ export default function HomeScreen() {
             <Sellos userStamps={userStamps} />
 
             {/* Listado Horizontal de Ofertas/Productos dinámicos */}
-            <Ofertas ofertas={ofertas} />
+            <Ofertas 
+              ofertas={ofertas} 
+              onProductAdded={() => incrementCartCount(1)} 
+              onProductRemoved={decrementCartCount} 
+            />
 
             {/* Banner Informativo CerclePlus */}
             <CerclePlus />
@@ -51,17 +64,16 @@ export default function HomeScreen() {
           </>
         )}
       </ScrollView>
+
+      {/* Carrito Flotante Premium (se dibuja automáticamente al tener elementos) */}
+      <FloatingCart count={cartCount} />
     </>
   );
 }
 
 const styles = StyleSheet.create({
   scrollContent: {
-    paddingBottom: 32,
-  },
-  centeredContainer: {
-    marginTop: 40,
-    alignItems: 'center',
+    paddingBottom: 96, // Espacio extra inferior para evitar solapar el carrito flotante
   },
   errorContainer: {
     marginTop: 60,

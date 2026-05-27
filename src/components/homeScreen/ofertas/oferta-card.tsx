@@ -1,7 +1,9 @@
-import React from 'react';
-import { View, StyleSheet, Text, Image, Pressable } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, StyleSheet, Text, Image, Pressable, Alert, Animated } from 'react-native';
 import { SymbolView } from 'expo-symbols';
+import { useRouter } from 'expo-router';
 import { Colors } from '@/constants/theme';
+import { useAuth } from '@/providers/AuthProvider';
 
 export interface Product {
   id: string;
@@ -17,6 +19,8 @@ export interface Product {
 
 interface OfertaCardProps {
   oferta: Product;
+  onProductAdded?: () => void;
+  onProductRemoved?: (quantity: number) => void;
 }
 
 // Helper to compute savings amount from price strings (e.g. "120 €" - "45 €" = 75)
@@ -26,8 +30,173 @@ const getSavingAmount = (originalPriceStr: string, priceStr: string): number => 
   return Math.max(0, Math.round(orig - curr));
 };
 
-export default function OfertaCard({ oferta }: OfertaCardProps) {
+export default function OfertaCard({ oferta, onProductAdded, onProductRemoved }: OfertaCardProps) {
+  const router = useRouter();
+  const { user, session } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [quantity, setQuantity] = useState(0); // Cantidad agregada al carrito
+
+  // Valores de animación para la transición del número de cantidad
+  const translateY = useRef(new Animated.Value(0)).current;
+  const opacity = useRef(new Animated.Value(1)).current;
+  const prevQuantity = useRef(0);
+
   const savingAmount = getSavingAmount(oferta.original_price, oferta.price);
+
+  // Efecto para disparar la animación de subida/bajada cuando cambia la cantidad
+  useEffect(() => {
+    if (quantity === 0) {
+      prevQuantity.current = 0;
+      return;
+    }
+
+    // Determinar la dirección de la transición (subir o bajar)
+    const isIncrement = quantity > prevQuantity.current;
+    prevQuantity.current = quantity;
+
+    // Resetear posición inicial fuera de foco
+    translateY.setValue(isIncrement ? 10 : -10);
+    opacity.setValue(0);
+
+    // Animación fluida de deslizamiento y aparición gradual
+    Animated.parallel([
+      Animated.spring(translateY, {
+        toValue: 0,
+        tension: 50,
+        friction: 7,
+        useNativeDriver: true,
+      }),
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 180,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [quantity]);
+
+  // Lógica para enviar la cantidad total al servidor (Upsert)
+  const syncCartQuantity = async (targetQty: number) => {
+    const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
+    const response = await fetch(`${supabaseUrl}/functions/v1/select-stores`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session?.access_token}`,
+      },
+      body: JSON.stringify({
+        product_id: oferta.id,
+        quantity: targetQty,
+      }),
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || 'Error al actualizar el carrito');
+    }
+
+    if (onProductAdded) {
+      onProductAdded();
+    }
+  };
+
+  // Lógica para eliminar el producto por completo de la base de datos (DELETE)
+  const deleteFromCartAPI = async () => {
+    const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
+    const response = await fetch(`${supabaseUrl}/functions/v1/select-stores`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session?.access_token}`,
+      },
+      body: JSON.stringify({
+        product_id: oferta.id,
+      }),
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.error || 'Error al eliminar del carrito');
+    }
+
+    if (onProductRemoved) {
+      onProductRemoved(quantity);
+    }
+  };
+
+  const handleInitialAdd = async () => {
+    if (!user) {
+      Alert.alert(
+        'Iniciar Sesión',
+        'Debes iniciar sesión para añadir productos a tu carrito.',
+        [
+          { text: 'Iniciar Sesión', onPress: () => router.push('/login') },
+          { text: 'Cancelar', style: 'cancel' },
+        ]
+      );
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await syncCartQuantity(1);
+      setQuantity(1);
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'No se pudo añadir el producto al carrito.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleIncrement = async () => {
+    const newQty = quantity + 1;
+    if (newQty > oferta.stock) {
+      Alert.alert('Límite de stock', `Lo sentimos, solo hay ${oferta.stock} unidades disponibles.`);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await syncCartQuantity(newQty);
+      setQuantity(newQty);
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'No se pudo actualizar el carrito.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDecrement = async () => {
+    const newQty = quantity - 1;
+
+    setLoading(true);
+    try {
+      if (newQty === 0) {
+        // Si baja a 0, borramos físicamente el registro con el método DELETE en la Edge
+        await deleteFromCartAPI();
+        setQuantity(0);
+      } else {
+        await syncCartQuantity(newQty);
+        setQuantity(newQty);
+      }
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'No se pudo actualizar el carrito.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeletePress = async () => {
+    setLoading(true);
+    try {
+      // Eliminar el producto por completo de la base de datos
+      await deleteFromCartAPI();
+      setQuantity(0);
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'No se pudo eliminar el producto del carrito.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Pressable style={styles.card}>
@@ -70,10 +239,62 @@ export default function OfertaCard({ oferta }: OfertaCardProps) {
           </View>
         </View>
 
-        {/* Right Column (Añadir Button) */}
-        <Pressable style={styles.addButton}>
-          <Text style={styles.addButtonText}>Añadir +</Text>
-        </Pressable>
+        {/* Right Column (Añadir o Selector de cantidad) */}
+        <View style={styles.actionContainer}>
+          {quantity > 0 ? (
+            // Selector de cantidad con Papelera al lado. Mantiene estructura visual y solo aplica opacidad en carga.
+            <View style={[styles.quantityContainerRow, loading && { opacity: 0.65 }]}>
+              {/* Icono de papelera premium (ahora funcional y conectada al DELETE de la Edge) */}
+              <Pressable 
+                style={styles.trashIconContainer} 
+                onPress={handleDeletePress}
+                disabled={loading}
+              >
+                <SymbolView
+                  name={{ ios: 'trash.fill', android: 'delete', web: 'delete' }}
+                  size={16}
+                  tintColor="#999999"
+                />
+              </Pressable>
+
+              {/* Selector de cantidad reactivo */}
+              <View style={styles.quantitySelector}>
+                <Pressable 
+                  style={[styles.selectorButton, loading && styles.disabledButton]} 
+                  onPress={handleDecrement}
+                  disabled={loading}
+                >
+                  <Text style={styles.selectorButtonText}>-</Text>
+                </Pressable>
+                
+                {/* Número animado para efecto subir/bajar */}
+                <Animated.View style={{ transform: [{ translateY }], opacity }}>
+                  <Text style={styles.quantityText}>{quantity}</Text>
+                </Animated.View>
+                
+                <Pressable 
+                  style={[
+                    styles.selectorButton, 
+                    (quantity >= oferta.stock || loading) && styles.disabledButton
+                  ]} 
+                  onPress={handleIncrement}
+                  disabled={quantity >= oferta.stock || loading}
+                >
+                  <Text style={styles.selectorButtonText}>+</Text>
+                </Pressable>
+              </View>
+            </View>
+          ) : (
+            // Botón inicial de Añadir. Conserva estructura fija y atenúa opacidad durante carga.
+            <Pressable 
+              style={[styles.addButton, loading && { opacity: 0.65 }]} 
+              onPress={handleInitialAdd}
+              disabled={loading}
+            >
+              <Text style={styles.addButtonText}>Añadir +</Text>
+            </Pressable>
+          )}
+        </View>
       </View>
     </Pressable>
   );
@@ -169,6 +390,12 @@ const styles = StyleSheet.create({
     color: '#888888',
     textDecorationLine: 'line-through',
   },
+  actionContainer: {
+    minWidth: 96,
+    height: 38,
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+  },
   addButton: {
     backgroundColor: Colors.background2,
     paddingVertical: 8,
@@ -178,10 +405,63 @@ const styles = StyleSheet.create({
     borderColor: '#EAEAEA',
     justifyContent: 'center',
     alignItems: 'center',
+    minWidth: 80,
+    height: 38,
   },
   addButtonText: {
     fontSize: 14,
     fontWeight: '700',
     color: Colors.text,
+  },
+  quantityContainerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  trashIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: Colors.background2,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#EAEAEA',
+  },
+  quantitySelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.background2,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: '#EAEAEA',
+    height: 38,
+    paddingHorizontal: 6,
+    gap: 12,
+  },
+  selectorButton: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#ffffff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#EAEAEA',
+  },
+  selectorButtonText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: Colors.text,
+  },
+  disabledButton: {
+    opacity: 0.4,
+  },
+  quantityText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: Colors.text,
+    minWidth: 16,
+    textAlign: 'center',
   },
 });
