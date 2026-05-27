@@ -29,7 +29,6 @@ export default function LoginForm() {
       return;
     }
 
-    setLoading(false);
     setLoading(true);
     try {
       const { error } = await supabaseAuth.auth.signInWithPassword({
@@ -38,9 +37,18 @@ export default function LoginForm() {
       });
 
       if (error) {
-        Alert.alert('Error de acceso', error.message);
+        let errorMsg = 'No se pudo iniciar sesión. Por favor, inténtalo de nuevo.';
+        const msg = error.message.toLowerCase();
+        if (msg.includes('invalid login credentials') || msg.includes('invalid credentials')) {
+          errorMsg = 'El correo electrónico o la contraseña son incorrectos.';
+        } else if (msg.includes('email not confirmed')) {
+          errorMsg = 'Por favor, confirma tu correo electrónico antes de iniciar sesión.';
+        } else if (msg.includes('network') || msg.includes('connection')) {
+          errorMsg = 'Error de conexión de red. Revisa tu internet.';
+        }
+        Alert.alert('Error de acceso', errorMsg);
       } else {
-        Alert.alert('Éxito', '¡Sesión iniciada correctamente!', [
+        Alert.alert('¡Éxito!', '¡Sesión iniciada correctamente!', [
           { text: 'OK', onPress: () => router.replace('/profile') }
         ]);
       }

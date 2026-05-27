@@ -48,7 +48,18 @@ export default function RegisterForm() {
       });
 
       if (error) {
-        Alert.alert('Error de registro', error.message);
+        let errorMsg = 'Hubo un problema al crear tu cuenta. Por favor, inténtalo de nuevo.';
+        const msg = error.message.toLowerCase();
+        if (msg.includes('already registered') || msg.includes('email_taken') || msg.includes('already exists')) {
+          errorMsg = 'Este correo electrónico ya está registrado.';
+        } else if (msg.includes('invalid email') || msg.includes('email address is invalid')) {
+          errorMsg = 'El formato del correo electrónico no es válido.';
+        } else if (msg.includes('password should be at least')) {
+          errorMsg = 'La contraseña es demasiado corta (mínimo 6 caracteres).';
+        } else if (msg.includes('network') || msg.includes('connection')) {
+          errorMsg = 'Error de conexión de red. Revisa tu internet.';
+        }
+        Alert.alert('Error de registro', errorMsg);
       } else {
         Alert.alert('¡Cuenta creada!', '¡Te has registrado con éxito!', [
           { text: 'OK', onPress: () => router.replace('/profile') }
