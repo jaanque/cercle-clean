@@ -28,7 +28,7 @@ export function useStoreDetail(storeId: string) {
     const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
     const authorizationToken = session?.access_token || supabaseAnonKey;
 
-    fetch(`${supabaseUrl}/functions/v1/select-stores`, {
+    fetch(`${supabaseUrl}/functions/v1/select-stores?storeId=${storeId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -44,15 +44,10 @@ export function useStoreDetail(storeId: string) {
       })
       .then((data) => {
         if (isMounted && data) {
-          // Filtrar la tienda seleccionada
-          const allStores: Store[] = data.stores || [];
-          const currentStore = allStores.find((s) => String(s.id) === String(storeId)) || null;
+          // La Edge Function con storeId filtrado ya devuelve la tienda concreta y sus productos
+          const currentStore = data.stores?.[0] || null;
           setStore(currentStore);
-
-          // Filtrar los productos pertenecientes a esta tienda
-          const allProducts: Product[] = data.products || [];
-          const storeProducts = allProducts.filter((p) => String(p.store_id) === String(storeId));
-          setProducts(storeProducts);
+          setProducts(data.products || []);
         }
       })
       .catch((err) => {
