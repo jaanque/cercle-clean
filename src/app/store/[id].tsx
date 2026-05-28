@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, Platform, Pressable, TextInput, Linking } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, Platform, Pressable, TextInput, Linking, Alert, Keyboard } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { Colors } from '@/constants/theme';
@@ -29,30 +29,40 @@ export default function StoreDetailScreen() {
   const router = useRouter();
   const { store, products, loading, error } = useStoreDetail(id || '');
 
-  const handleOpenMaps = () => {
+  const handleOpenMaps = async () => {
     if (!store) return;
-    const { latitude, longitude, name, location } = store;
-    let url = '';
-    
-    if (latitude !== undefined && latitude !== null && longitude !== undefined && longitude !== null) {
-      const latLng = `${latitude},${longitude}`;
-      const label = encodeURIComponent(name);
-      url = Platform.select({
-        ios: `maps://0,0?q=${label}@${latLng}`,
-        android: `geo:0,0?q=${latLng}(${label})`,
-        web: `https://www.google.com/maps/search/?api=1&query=${latLng}`
-      }) || '';
-    } else if (location) {
-      const query = encodeURIComponent(location);
-      url = Platform.select({
-        ios: `maps://0,0?q=${query}`,
-        android: `geo:0,0?q=${query}`,
-        web: `https://www.google.com/maps/search/?api=1&query=${query}`
-      }) || '';
-    }
+    try {
+      const { latitude, longitude, name, location } = store;
+      let url = '';
+      
+      if (latitude !== undefined && latitude !== null && longitude !== undefined && longitude !== null) {
+        const latLng = `${latitude},${longitude}`;
+        const label = encodeURIComponent(name || 'Tienda');
+        url = Platform.select({
+          ios: `maps://0,0?q=${label}@${latLng}`,
+          android: `geo:0,0?q=${latLng}(${label})`,
+          web: `https://www.google.com/maps/search/?api=1&query=${latLng}`
+        }) || '';
+      } else if (location) {
+        const query = encodeURIComponent(location);
+        url = Platform.select({
+          ios: `maps://0,0?q=${query}`,
+          android: `geo:0,0?q=${query}`,
+          web: `https://www.google.com/maps/search/?api=1&query=${query}`
+        }) || '';
+      }
 
-    if (url) {
-      Linking.openURL(url).catch((err) => console.error("Error opening maps", err));
+      if (url) {
+        const supported = await Linking.canOpenURL(url);
+        if (supported) {
+          await Linking.openURL(url);
+        } else {
+          Alert.alert('Plataforma no soportada', 'No se pudo abrir la aplicación de mapas en este dispositivo.');
+        }
+      }
+    } catch (err) {
+      console.error("Error launching maps:", err);
+      Alert.alert('Error', 'Ocurrió un problema inesperado al intentar abrir el mapa.');
     }
   };
 
@@ -63,8 +73,14 @@ export default function StoreDetailScreen() {
   // Estado para la búsqueda de productos
   const [searchQuery, setSearchQuery] = useState('');
 
+  const handleSearchChange = (text: string) => {
+    // Sanitización en caliente nivel Bestia contra XSS e inyección en el buscador
+    const sanitized = text.replace(/['"`;\\<>]/g, '');
+    setSearchQuery(sanitized);
+  };
+
   const handleScroll = (event: any) => {
-    const offsetY = event.nativeEvent.contentOffset.y;
+    const offsetY = event?.nativeEvent?.contentOffset?.y || 0;
     // Activamos la cabecera fija compacta cuando el scroll Y supera la altura del título en la cabecera original
     if (offsetY > 130) {
       if (!showStickyHeader) setShowStickyHeader(true);
@@ -88,17 +104,21 @@ export default function StoreDetailScreen() {
     );
   }
 
-  // Filtrado dinámico de productos basado en la búsqueda
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filtrado dinámico de productos basado en la búsqueda (Búnker antierrores de renderizado)
+  const filteredProducts = products.filter((product) => {
+    if (!product || typeof product.name !== 'string') return false;
+    return product.name.toLowerCase().includes(searchQuery.toLowerCase());
+  });
 
   return (
-    <View style={styles.screenContainer}>
+    <Pressable style={styles.screenContainer} onPress={Keyboard.dismiss} accessible={false}>
       {/* Barra de Navegación Pegajosa (Sticky Header on Scroll) */}
       {showStickyHeader && (
         <View style={styles.stickyHeader}>
-          <Pressable style={styles.stickyBackButton} onPress={() => router.back()}>
+          <Pressable 
+            style={({ pressed }) => [styles.stickyBackButton, pressed && { opacity: 0.6 }]} 
+            onPress={() => router.back()}
+          >
             <SymbolView
               name={{ ios: 'chevron.left', android: 'arrow_back', web: 'arrow_back' }}
               size={20}
@@ -118,6 +138,8 @@ export default function StoreDetailScreen() {
         contentContainerStyle={styles.scrollContent}
         onScroll={handleScroll}
         scrollEventThrottle={16}
+        keyboardDismissMode="on-drag"
+        keyboardShouldPersistTaps="handled"
       >
         {/* Cabecera Estática Estándar y Segura de Store */}
         <StoreHeader name={store.name} image={store.image} logo={store.logo} />
@@ -165,20 +187,18 @@ export default function StoreDetailScreen() {
           />
           <TextInput
             value={searchQuery}
-            onChangeText={setSearchQuery}
+            onChangeText={handleSearchChange}
             placeholder="Buscar productos..."
             placeholderTextColor="#9EA8B6"
             style={styles.searchInput}
             clearButtonMode="while-editing"
             autoCorrect={false}
             autoCapitalize="none"
+            maxLength={60}
           />
         </View>
 
-        {/* Separador de Sección */}
-        <View style={styles.sectionHeaderContainer}>
-          <Text style={styles.sectionTitleText}>Salvar excedentes</Text>
-        </View>
+
 
         {/* --- SECCIÓN: MENÚ GENERAL / ENTRANTES (Vertical) --- */}
         {filteredProducts.length > 0 ? (
@@ -202,7 +222,7 @@ export default function StoreDetailScreen() {
 
       {/* Píldora de Carrito Flotante */}
       <FloatingCart count={cartCount} />
-    </View>
+    </Pressable>
   );
 }
 
@@ -352,16 +372,5 @@ const styles = StyleSheet.create({
   cerclePlusWrapper: {
     paddingHorizontal: 20,
     marginTop: 18,
-  },
-  sectionHeaderContainer: {
-    paddingHorizontal: 20,
-    marginTop: 24,
-    marginBottom: 4,
-  },
-  sectionTitleText: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: Colors.text,
-    letterSpacing: -0.3,
   },
 });

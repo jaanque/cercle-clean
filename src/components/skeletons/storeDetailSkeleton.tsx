@@ -61,10 +61,7 @@ export default function StoreDetailSkeleton() {
       {/* 4. SKELETON: Buscador de Productos */}
       <Animated.View style={[styles.searchBarSkeleton, { opacity: pulseAnim }]} />
 
-      {/* Seccion título */}
-      <View style={styles.sectionHeaderSkeleton}>
-        <Animated.View style={[styles.sectionTitleSkeleton, { opacity: pulseAnim }]} />
-      </View>
+
 
       {/* 5. SKELETON: Lista de Productos */}
       <View style={styles.productListSkeleton}>
@@ -167,17 +164,6 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginTop: 20,
     marginBottom: 8,
-  },
-  sectionHeaderSkeleton: {
-    paddingHorizontal: 20,
-    marginTop: 24,
-    marginBottom: 4,
-  },
-  sectionTitleSkeleton: {
-    width: 150,
-    height: 22,
-    borderRadius: 6,
-    backgroundColor: '#EAEAEA',
   },
   productListSkeleton: {
     paddingHorizontal: 20,
