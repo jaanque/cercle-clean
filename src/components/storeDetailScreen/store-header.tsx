@@ -11,8 +11,8 @@ interface StoreHeaderProps {
 
 /**
  * StoreHeader - Cabecera premium inmersiva según la referencia de diseño de alta fidelidad.
- * - Cuenta con botones circulares translúcidos superpuestos en la imagen.
  * - Integra un avatar de comercio flotante (circular con borde blanco) centrado en el borde inferior.
+ * - Botón de volver unificado con la estética de la app (#F7F7F7 y chevron oscuro).
  */
 export default function StoreHeader({ name, image, logo }: StoreHeaderProps) {
   const router = useRouter();
@@ -25,48 +25,15 @@ export default function StoreHeader({ name, image, logo }: StoreHeaderProps) {
       {/* Banner de la tienda */}
       <Image source={{ uri: image }} style={styles.bannerImage} />
 
-      {/* Capa translúcida superior para mejor contraste de los botones */}
-      <View style={styles.topGradient} />
-
       {/* Botón Volver (Izquierda) */}
       <Pressable style={styles.circularButtonLeft} onPress={() => router.back()}>
         <SymbolView
           name={{ ios: 'chevron.left', android: 'arrow_back', web: 'arrow_back' }}
           size={20}
-          tintColor="#ffffff"
+          tintColor="#333333"
           weight="bold"
         />
       </Pressable>
-
-      {/* Fila de Botones de Acción (Derecha) */}
-      <View style={styles.rightActionsContainer}>
-        <Pressable style={styles.circularButtonRight}>
-          <SymbolView
-            name={{ ios: 'magnifyingglass', android: 'search', web: 'search' }}
-            size={18}
-            tintColor="#ffffff"
-            weight="bold"
-          />
-        </Pressable>
-
-        <Pressable style={styles.circularButtonRight}>
-          <SymbolView
-            name={{ ios: 'heart', android: 'favorite_border', web: 'favorite_border' }}
-            size={18}
-            tintColor="#ffffff"
-            weight="bold"
-          />
-        </Pressable>
-
-        <Pressable style={styles.circularButtonRight}>
-          <SymbolView
-            name={{ ios: 'ellipsis', android: 'more_vert', web: 'more_vert' }}
-            size={18}
-            tintColor="#ffffff"
-            weight="bold"
-          />
-        </Pressable>
-      </View>
 
       {/* Logotipo/Avatar Flotante Central Inferior */}
       <View style={styles.avatarWrapper}>
@@ -89,14 +56,6 @@ const styles = StyleSheet.create({
     height: 220,
     resizeMode: 'cover',
   },
-  topGradient: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: Platform.OS === 'ios' ? 100 : 70,
-    backgroundColor: 'rgba(0, 0, 0, 0.25)', // Capa sutil superior
-  },
   circularButtonLeft: {
     position: 'absolute',
     top: Platform.OS === 'ios' ? 54 : 16,
@@ -104,27 +63,10 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    backgroundColor: '#F7F7F7', // Unificado con la UI de la app
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 99,
-  },
-  rightActionsContainer: {
-    position: 'absolute',
-    top: Platform.OS === 'ios' ? 54 : 16,
-    right: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    zIndex: 99,
-  },
-  circularButtonRight: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   avatarWrapper: {
     position: 'absolute',

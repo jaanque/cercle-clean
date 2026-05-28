@@ -40,13 +40,6 @@ export default function StoreDetailSkeleton() {
         
         {/* Botón volver simulado */}
         <View style={styles.circularButtonLeftSkeleton} />
-        
-        {/* Fila de botones de acción derecha simulada */}
-        <View style={styles.rightActionsSkeleton}>
-          <View style={styles.circularButtonRightSkeleton} />
-          <View style={styles.circularButtonRightSkeleton} />
-          <View style={styles.circularButtonRightSkeleton} />
-        </View>
 
         {/* Avatar/Logotipo flotante centrado superpuesto */}
         <Animated.View style={[styles.avatarSkeleton, { opacity: pulseAnim }]} />
@@ -124,21 +117,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     opacity: 0.45,
   },
-  rightActionsSkeleton: {
-    position: 'absolute',
-    top: Platform.OS === 'ios' ? 54 : 16,
-    right: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  circularButtonRightSkeleton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: '#ffffff',
-    opacity: 0.45,
-  },
+
   avatarSkeleton: {
     position: 'absolute',
     bottom: -45,
