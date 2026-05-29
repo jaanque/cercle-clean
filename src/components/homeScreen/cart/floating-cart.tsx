@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Text, Pressable, Animated } from 'react-native';
 import { SymbolView } from 'expo-symbols';
+import { useRouter } from 'expo-router';
 import { Colors } from '@/constants/theme';
 
 interface FloatingCartProps {
@@ -14,6 +15,7 @@ interface FloatingCartProps {
  * Se adapta perfectamente al color corporativo de la aplicación (Colors.accent).
  */
 export default function FloatingCart({ count, onPress }: FloatingCartProps) {
+  const router = useRouter();
   const [shouldRender, setShouldRender] = React.useState(count > 0);
   const fadeAnim = useRef(new Animated.Value(count > 0 ? 1 : 0)).current;
   const slideAnim = useRef(new Animated.Value(count > 0 ? 0 : 25)).current;
@@ -85,7 +87,7 @@ export default function FloatingCart({ count, onPress }: FloatingCartProps) {
         }
       ]}
     >
-      <Pressable style={styles.pill} onPress={onPress}>
+      <Pressable style={styles.pill} onPress={onPress || (() => router.push('/cart'))}>
         {/* Lado izquierdo: Icono de cesta/carrito en blanco */}
         <SymbolView
           name={{ ios: 'basket.fill', android: 'shopping_basket', web: 'shopping_basket' }}
