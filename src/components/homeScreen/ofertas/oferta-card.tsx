@@ -5,7 +5,6 @@ import { useRouter } from 'expo-router';
 import { Colors } from '@/constants/theme';
 import { useAuth } from '@/providers/AuthProvider';
 import { useCart } from '@/providers/CartProvider';
-import { cartSyncSchema, cartDeleteSchema } from '@/lib/schemas/cart';
 
 
 export interface Product {
@@ -42,15 +41,12 @@ const formatReviewsCount = (reviewsCount: string | undefined | null) => {
 
 export default function OfertaCard({ oferta, onProductAdded, onProductRemoved, fullWidth = false }: OfertaCardProps) {
   const router = useRouter();
-  const { user, session } = useAuth();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   
   // Consumimos el estado del carrito global sincronizado por producto
   const { cartItems, updateProductQuantity } = useCart();
   const quantity = cartItems[oferta.id] || 0;
-  const setQuantity = (newQty: number) => {
-    updateProductQuantity(oferta.id, newQty);
-  };
 
   // Valores de animación para la transición del número de cantidad
   const translateY = useRef(new Animated.Value(0)).current;
@@ -90,72 +86,6 @@ export default function OfertaCard({ oferta, onProductAdded, onProductRemoved, f
     ]).start();
   }, [quantity]);
 
-  // Lógica para enviar la cantidad total al servidor (Upsert)
-  const syncCartQuantity = async (targetQty: number) => {
-    // Validación extrema en frontend (Búnker) con Zod
-    const validation = cartSyncSchema.safeParse({
-      product_id: oferta.id,
-      quantity: targetQty,
-    });
-
-    if (!validation.success) {
-      // Abortamos la llamada antes de hacer uso de la red
-      const errorMsg = validation.error.issues.map(issue => issue.message).join('\n');
-      throw new Error(errorMsg);
-    }
-
-    const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
-    const response = await fetch(`${supabaseUrl}/functions/v1/select-stores`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session?.access_token}`,
-      },
-      body: JSON.stringify(validation.data), // Datos perfectamente validados y tipados
-    });
-
-    const result = await response.json();
-    if (!response.ok) {
-      throw new Error(result.error || 'Error al actualizar el carrito');
-    }
-
-    if (onProductAdded) {
-      onProductAdded();
-    }
-  };
-
-  // Lógica para eliminar el producto por completo de la base de datos (DELETE)
-  const deleteFromCartAPI = async () => {
-    // Validación extrema en frontend (Búnker) con Zod
-    const validation = cartDeleteSchema.safeParse({
-      product_id: oferta.id,
-    });
-
-    if (!validation.success) {
-      const errorMsg = validation.error.issues.map(issue => issue.message).join('\n');
-      throw new Error(errorMsg);
-    }
-
-    const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
-    const response = await fetch(`${supabaseUrl}/functions/v1/select-stores`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session?.access_token}`,
-      },
-      body: JSON.stringify(validation.data), // Datos perfectamente validados y tipados
-    });
-
-    const result = await response.json();
-    if (!response.ok) {
-      throw new Error(result.error || 'Error al eliminar del carrito');
-    }
-
-    if (onProductRemoved) {
-      onProductRemoved(quantity);
-    }
-  };
-
   const handleInitialAdd = async () => {
     if (!user) {
       Alert.alert(
@@ -171,8 +101,10 @@ export default function OfertaCard({ oferta, onProductAdded, onProductRemoved, f
 
     setLoading(true);
     try {
-      await syncCartQuantity(1);
-      setQuantity(1);
+      await updateProductQuantity(oferta.id, 1);
+      if (onProductAdded) {
+        onProductAdded();
+      }
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'No se pudo añadir el producto al carrito.';
       Alert.alert('Error', errorMessage);
@@ -190,8 +122,7 @@ export default function OfertaCard({ oferta, onProductAdded, onProductRemoved, f
 
     setLoading(true);
     try {
-      await syncCartQuantity(newQty);
-      setQuantity(newQty);
+      await updateProductQuantity(oferta.id, newQty);
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'No se pudo actualizar el carrito.';
       Alert.alert('Error', errorMessage);
@@ -205,13 +136,9 @@ export default function OfertaCard({ oferta, onProductAdded, onProductRemoved, f
 
     setLoading(true);
     try {
-      if (newQty === 0) {
-        // Si baja a 0, borramos físicamente el registro con el método DELETE en la Edge
-        await deleteFromCartAPI();
-        setQuantity(0);
-      } else {
-        await syncCartQuantity(newQty);
-        setQuantity(newQty);
+      await updateProductQuantity(oferta.id, newQty);
+      if (newQty === 0 && onProductRemoved) {
+        onProductRemoved(quantity);
       }
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'No se pudo actualizar el carrito.';
@@ -224,9 +151,10 @@ export default function OfertaCard({ oferta, onProductAdded, onProductRemoved, f
   const handleDeletePress = async () => {
     setLoading(true);
     try {
-      // Eliminar el producto por completo de la base de datos
-      await deleteFromCartAPI();
-      setQuantity(0);
+      await updateProductQuantity(oferta.id, 0);
+      if (onProductRemoved) {
+        onProductRemoved(quantity);
+      }
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'No se pudo eliminar el producto del carrito.';
       Alert.alert('Error', errorMessage);

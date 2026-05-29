@@ -55,7 +55,7 @@ export function useStoreDetail(storeId: string) {
   const [error, setError] = useState<string | null>(null);
 
   const { session } = useAuth();
-  const { setCartItems } = useCart();
+  const { syncCartState } = useCart();
 
   useEffect(() => {
     // Sanitización rigurosa de storeId para prevenir inyecciones en la URL de consulta
@@ -101,16 +101,8 @@ export function useStoreDetail(storeId: string) {
         setStore(currentStore);
         setProducts((data.products || []) as Product[]);
 
-        // Sincronizar el mapa del carrito si viene en los datos del GET
-        if (data && Array.isArray(data.cart_items)) {
-          const itemsMap: Record<string, number> = {};
-          data.cart_items.forEach((item: any) => {
-            if (item.product_id) {
-              itemsMap[item.product_id] = item.quantity || 0;
-            }
-          });
-          setCartItems(itemsMap);
-        }
+        // Sincronizar el estado del carrito de forma centralizada
+        syncCartState(rawData);
       })
       .catch((err) => {
         if (isMounted) {
@@ -126,7 +118,7 @@ export function useStoreDetail(storeId: string) {
     return () => {
       isMounted = false;
     };
-  }, [storeId, session, setCartItems]);
+  }, [storeId, session, syncCartState]);
 
   return {
     store,

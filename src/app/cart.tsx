@@ -21,13 +21,13 @@ import CartFooter from '@/components/cartScreen/cart-footer';
 export default function CartScreen() {
   const router = useRouter();
   
-  // Consumir el carrito global reactivo
-  const { cartItems, updateProductQuantity } = useCart();
+  // Consumir el carrito global reactivo desde el proveedor (hidratado desde la Edge Function)
+  const { cartItemsDetails, cartSubtotal, updateProductQuantity, loading: syncing } = useCart();
   
-  // Consumir catálogo real de productos y tiendas
-  const { ofertas, loading, error } = useHomeData();
+  // Consumir catálogo real/sincronización de productos
+  const { loading, error } = useHomeData();
 
-  // Utilidad bunkerizada para limpiar y formatear precios de forma robusta ante cualquier formato nulo o corrupto
+  // Utilidad bunkerizada para limpiar y formatear precios (mantenida por compatibilidad de tipos si se requiere)
   const parsePrice = (priceStr: string | undefined | null): number => {
     try {
       if (!priceStr || typeof priceStr !== 'string') return 0;
@@ -51,28 +51,11 @@ export default function CartScreen() {
     }
   };
 
-  // Filtrar productos del carrito con defensas contra nulos o referencias corruptas
-  const cartProducts = (ofertas || []).filter((prod) => {
-    if (!prod || !prod.id) return false;
-    const qty = cartItems?.[prod.id];
-    return typeof qty === 'number' && qty > 0;
-  });
-
-  // Calcular subtotal en tiempo real con control de nulos y try-catch
-  const subtotal = (() => {
-    try {
-      return cartProducts.reduce((sum, prod) => {
-        const qty = cartItems?.[prod.id] || 0;
-        return sum + parsePrice(prod.price) * qty;
-      }, 0);
-    } catch {
-      return 0;
-    }
-  })();
-
   const handlePay = () => {
     // Aquí iría el flujo bunkerizado de pago o navegación de checkout
   };
+
+  const isScreenLoading = loading && cartItemsDetails.length === 0;
 
   return (
     <View style={styles.screenContainer}>
@@ -99,29 +82,30 @@ export default function CartScreen() {
         <View style={styles.headerRightSpacer} />
       </View>
 
-      {loading ? (
+      {isScreenLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={Colors.accent} />
           <Text style={styles.loadingText}>Sincronizando carrito...</Text>
         </View>
-      ) : error ? (
+      ) : error && cartItemsDetails.length === 0 ? (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>No pudimos cargar los datos del carrito.</Text>
           <Text style={styles.errorSubtext}>{String(error)}</Text>
         </View>
-      ) : cartProducts.length === 0 ? (
+      ) : cartItemsDetails.length === 0 ? (
         <EmptyCart />
       ) : (
         <>
           <ScrollView 
             bounces={true} 
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={[styles.scrollContent, syncing && { opacity: 0.75 }]}
           >
             {/* --- DETALLES REALES DE LOS PRODUCTOS EN EL CARRITO CON ANIMACIONES DE CANTIDAD --- */}
-            {cartProducts.map((product) => {
-              if (!product || !product.id) return null;
-              const qty = cartItems[product.id] || 0;
+            {cartItemsDetails.map((item) => {
+              if (!item || !item.product || !item.product_id) return null;
+              const product = item.product;
+              const qty = item.quantity || 0;
               
               return (
                 <CartItemRow 
@@ -134,8 +118,8 @@ export default function CartScreen() {
               );
             })}
 
-            {/* --- DESGLOSE DE RESUMEN REAL --- */}
-            <CartSummary subtotal={subtotal} />
+            {/* --- DESGLOSE DE RESUMEN REAL CALCULADO 100% EN BACKEND --- */}
+            <CartSummary subtotal={cartSubtotal} />
           </ScrollView>
 
           {/* --- BOTÓN DE PAGO FIJO EN LA BASE CON BANNER DE MÉTODO DE PAGO --- */}
