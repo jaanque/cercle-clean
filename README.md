@@ -1,56 +1,51 @@
-# Welcome to your Expo app 👋
+# Cercle App 📱✨
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Este es el repositorio oficial de la aplicación móvil de Cercle, desarrollada sobre el stack de **React Native** con **Expo** y conectada a una infraestructura segura de **Supabase Edge Functions**.
 
-## Get started
+---
 
-1. Install dependencies
+## 🛠️ Guía de Commits y Versionado
 
-   ```bash
-   npm install
-   ```
+Para mantener un historial de cambios limpio, estructurado y fácil de auditar, todos los commits de este proyecto deben seguir una nomenclatura de prefijos obligatoria según la naturaleza del cambio:
 
-2. Start the app
+### Prefijos Principales
+* **`ADD`** ➡️ **AÑADIR**: Se utiliza para la incorporación de nuevas funcionalidades, componentes, pantallas o archivos completos.
+  * *Ejemplo:* `ADD: pantalla de carrito de compras premium con soporte interactivo`
+* **`MOD`** ➡️ **MODIFICAR**: Se usa para cambios o actualizaciones sobre lógica, componentes o archivos ya existentes.
+  * *Ejemplo:* `MOD: adaptado el flujo del carrito para consumir la Edge Function`
+* **`DEL`** ➡️ **ELIMINAR**: Reservado para remover componentes, código deprecado, mock data o archivos del proyecto.
+  * *Ejemplo:* `DEL: eliminado el componente huérfano CartItemRow y estilos antiguos`
+* **`REF`** ➡️ **REFACTORIZAR**: Cambios estructurales del código que mejoran su legibilidad o modularidad sin alterar su comportamiento visual ni funcional.
+  * *Ejemplo:* `REF: simplificada lógica de OfertaCard extrayendo consultas a hooks globales`
 
-   ```bash
-   npx expo start
-   ```
+### Prefijos de Soporte
+* **`FIX`** ➡️ **CORREGIR**: Solución de fallos, crashes, bugs de React Native o errores de compilación de TypeScript.
+  * *Ejemplo:* `FIX: corregido bucle infinito de renderizados en useHomeData con useCallback`
+* **`SEC`** ➡️ **SEGURIDAD**: Adición de validaciones Zero-Trust, sanitización de inputs o cerrojos de concurrencia contra condiciones de carrera.
+  * *Ejemplo:* `SEC: añadido cerrojo transaccional Mutex y validación Zod en CartProvider`
+* **`STY`** ➡️ **ESTILOS / UI**: Cambios estéticos, de diseño, hojas de estilos (`StyleSheet`), colores, tipografía o espaciados.
+  * *Ejemplo:* `STY: unificado el redondeado corporativo a 22px en tarjetas de producto`
+* **`DOC`** ➡️ **DOCUMENTACIÓN**: Creación o actualización de guías, ficheros Markdown (`README.md`, `AGENTS.md`) o comentarios extensivos del código.
+  * *Ejemplo:* `DOC: actualizada la documentación de versionado y commits en el README`
+* **`CFG`** ➡️ **CONFIGURACIÓN**: Modificación de dependencias en `package.json`, configuraciones de Expo, TypeScript o variables de entorno.
+  * *Ejemplo:* `CFG: añadido tipado estricto para esquemas Zod de red en tsconfig`
 
-In the output, you'll find options to open the app in a
+---
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## 🚀 Inicio Rápido (Desarrollo)
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
+### 1. Instalar dependencias
 ```bash
-npm run reset-project
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### 2. Levantar el entorno de Expo
+```bash
+npx expo start
+```
 
-### Other setup steps
-
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+### 3. Ejecutar en simuladores
+En la consola interactiva podrás seleccionar:
+* **`i`** para simulador de **iOS**
+* **`a`** para emulador de **Android**
+* **`w`** para iniciar en entorno **Web**
