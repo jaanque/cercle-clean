@@ -5,7 +5,7 @@ import { SymbolView } from 'expo-symbols';
 import { Colors } from '@/constants/theme';
 import { useCart } from '@/providers/CartProvider';
 import { useHomeData } from '@/hooks/useHomeData';
-import CartItemRow from '@/components/cartScreen/cart-item-row';
+import OfertaCard from '@/components/homeScreen/ofertas/oferta-card';
 import CartSummary from '@/components/cartScreen/cart-summary';
 import EmptyCart from '@/components/cartScreen/empty-cart';
 import CartFooter from '@/components/cartScreen/cart-footer';
@@ -27,32 +27,65 @@ export default function CartScreen() {
   // Consumir catálogo real/sincronización de productos
   const { loading, error } = useHomeData();
 
-  // Utilidad bunkerizada para limpiar y formatear precios (mantenida por compatibilidad de tipos si se requiere)
-  const parsePrice = (priceStr: string | undefined | null): number => {
-    try {
-      if (!priceStr || typeof priceStr !== 'string') return 0;
-      const sanitized = priceStr.replace(/[^0-9.,]/g, '').replace(',', '.');
-      const val = parseFloat(sanitized);
-      return isNaN(val) ? 0 : val;
-    } catch {
-      return 0;
-    }
+  // Estados interactivos simples y obligatorios para la pasarela de pago
+  const [paymentMethod, setPaymentMethod] = React.useState<string>('Tarjeta de Crédito •••• 4242');
+  const [isPaying, setIsPaying] = React.useState<boolean>(false);
+
+  // Cambio dinámico e interactivo del método de pago
+  const handleSelectPaymentMethod = () => {
+    const methods = [
+      { text: '💳 Tarjeta de Crédito •••• 4242', value: 'Tarjeta de Crédito •••• 4242' },
+      { text: ' Apple Pay / Google Pay', value: 'Apple Pay' },
+      { text: '💵 Pago en Efectivo', value: 'Pago en Efectivo' },
+      { text: 'Cancelar', style: 'cancel' }
+    ];
+
+    // Diálogo nativo e inmediato en dispositivos iOS/Android/Web
+    require('react-native').Alert.alert(
+      'Método de Pago',
+      'Selecciona cómo deseas pagar tu pedido:',
+      methods.map(m => m.style === 'cancel' ? { text: m.text, style: 'cancel' } : {
+        text: m.text,
+        onPress: () => m.value && setPaymentMethod(m.value)
+      })
+    );
   };
 
-  // Manejo ultra seguro de cantidades (Sanitiza IDs contra XSS/inyección y acota cantidades entre 0 y 99)
-  const handleUpdateQuantity = (productId: string | undefined | null, newQty: number) => {
+  // Ejecución segura y satisfactoria del pago
+  const handlePay = async () => {
+    setIsPaying(true);
+
     try {
-      if (!productId || typeof productId !== 'string') return;
-      const safeId = productId.replace(/[^a-zA-Z0-9-]/g, '');
-      const clampedQty = Math.max(0, Math.min(99, newQty));
-      updateProductQuantity(safeId, clampedQty);
+      // Simular procesamiento del pago seguro (1.5 segundos)
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // Vaciar todos los ítems del carrito localmente y en el servidor
+      const clearPromises = cartItemsDetails.map(item => 
+        updateProductQuantity(item.product_id, 0)
+      );
+      await Promise.all(clearPromises);
+
+      // Mostrar alerta de éxito amigable y limpia
+      require('react-native').Alert.alert(
+        '¡Pedido Completado!',
+        'Hemos procesado tu pago con éxito. Tu pedido ha sido enviado al establecimiento.',
+        [{
+          text: 'Aceptar',
+          onPress: () => {
+            try {
+              router.replace('/');
+            } catch {
+              router.push('/');
+            }
+          }
+        }]
+      );
     } catch (err) {
-      console.error("Bunker Security: Error updating cart quantity safely:", err);
+      console.error("Payment transaction failure:", err);
+      require('react-native').Alert.alert('Error', 'No pudimos procesar el pago. Inténtalo de nuevo.');
+    } finally {
+      setIsPaying(false);
     }
-  };
-
-  const handlePay = () => {
-    // Aquí iría el flujo bunkerizado de pago o navegación de checkout
   };
 
   const isScreenLoading = loading && cartItemsDetails.length === 0;
@@ -99,21 +132,18 @@ export default function CartScreen() {
           <ScrollView 
             bounces={true} 
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={[styles.scrollContent, syncing && { opacity: 0.75 }]}
+            contentContainerStyle={[styles.scrollContent, (syncing || isPaying) && { opacity: 0.75 }]}
           >
-            {/* --- DETALLES REALES DE LOS PRODUCTOS EN EL CARRITO CON ANIMACIONES DE CANTIDAD --- */}
+            {/* --- DETALLES REALES DE LOS PRODUCTOS EN EL CARRITO CON TARJETAS DE PRODUCTO COMPLETAS --- */}
             {cartItemsDetails.map((item) => {
               if (!item || !item.product || !item.product_id) return null;
               const product = item.product;
-              const qty = item.quantity || 0;
               
               return (
-                <CartItemRow 
+                <OfertaCard 
                   key={product.id}
-                  product={product}
-                  quantity={qty}
-                  onUpdateQuantity={handleUpdateQuantity}
-                  parsePrice={parsePrice}
+                  oferta={product}
+                  fullWidth={true}
                 />
               );
             })}
@@ -123,7 +153,12 @@ export default function CartScreen() {
           </ScrollView>
 
           {/* --- BOTÓN DE PAGO FIJO EN LA BASE CON BANNER DE MÉTODO DE PAGO --- */}
-          <CartFooter onPay={handlePay} />
+          <CartFooter 
+            onPay={handlePay} 
+            onSelectPaymentMethod={handleSelectPaymentMethod}
+            paymentMethodText={paymentMethod}
+            isPaying={isPaying}
+          />
         </>
       )}
     </View>

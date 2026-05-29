@@ -1,28 +1,40 @@
 import React from 'react';
-import { StyleSheet, Text, View, Pressable, Platform } from 'react-native';
+import { StyleSheet, Text, View, Pressable, Platform, ActivityIndicator } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import { Colors } from '@/constants/theme';
 
 interface CartFooterProps {
   onPay?: () => void;
   onSelectPaymentMethod?: () => void;
+  paymentMethodText?: string;
+  isPaying?: boolean;
 }
 
-export default function CartFooter({ onPay, onSelectPaymentMethod }: CartFooterProps) {
+export default function CartFooter({ onPay, onSelectPaymentMethod, paymentMethodText = 'Pago con Tarjeta •••• 4242', isPaying = false }: CartFooterProps) {
+  const isApplePay = paymentMethodText.includes('Apple');
+  const isCash = paymentMethodText.includes('Efectivo');
+
   return (
     <View style={styles.footerContainer}>
       {/* Banner fino e interactivo de método de pago */}
       <Pressable 
         style={({ pressed }) => [styles.paymentMethodBanner, pressed && { opacity: 0.85 }]}
         onPress={onSelectPaymentMethod}
+        disabled={isPaying}
       >
         <View style={styles.paymentMethodLeft}>
           <SymbolView 
-            name={{ ios: 'creditcard.fill', android: 'credit_card', web: 'credit_card' }} 
+            name={
+              isApplePay 
+                ? { ios: 'apple.logo', android: 'payment', web: 'credit_card' }
+                : isCash 
+                ? { ios: 'banknote.fill', android: 'payments', web: 'credit_card' }
+                : { ios: 'creditcard.fill', android: 'credit_card', web: 'credit_card' }
+            } 
             size={14} 
             tintColor={Colors.accent} 
           />
-          <Text style={styles.paymentMethodText}>Pago con Tarjeta •••• 4242</Text>
+          <Text style={styles.paymentMethodText}>{paymentMethodText}</Text>
         </View>
         <SymbolView 
           name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }} 
@@ -32,10 +44,18 @@ export default function CartFooter({ onPay, onSelectPaymentMethod }: CartFooterP
       </Pressable>
 
       <Pressable 
-        style={({ pressed }) => [styles.payButton, pressed && { opacity: 0.9 }]}
+        style={({ pressed }) => [
+          styles.payButton, 
+          (pressed || isPaying) && { opacity: 0.9 }
+        ]}
         onPress={onPay}
+        disabled={isPaying}
       >
-        <Text style={styles.payButtonText}>Continuar al pago</Text>
+        {isPaying ? (
+          <ActivityIndicator size="small" color="#ffffff" />
+        ) : (
+          <Text style={styles.payButtonText}>Continuar al pago</Text>
+        )}
       </Pressable>
     </View>
   );

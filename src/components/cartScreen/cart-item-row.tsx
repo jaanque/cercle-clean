@@ -199,17 +199,4 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#EAEAEA',
   },
-  saveForLaterButton: {
-    height: 36,
-    paddingHorizontal: 14,
-    backgroundColor: Colors.background2, // Gris oficial de la app #F7F7F7
-    borderRadius: 22, // Redondeado corporativo a 22px
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  saveForLaterText: {
-    color: '#666666',
-    fontSize: 12,
-    fontWeight: '600',
-  },
 });

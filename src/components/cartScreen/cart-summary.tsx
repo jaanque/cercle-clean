@@ -14,15 +14,7 @@ export default function CartSummary({ subtotal }: CartSummaryProps) {
   return (
     <View style={styles.summaryCard}>
       <View style={styles.summaryRow}>
-        <Text style={styles.summaryLabel}>Subtotal</Text>
-        <Text style={styles.summaryVal}>{subtotal.toFixed(2)} €</Text>
-      </View>
-      <View style={styles.summaryRow}>
-        <Text style={styles.summaryLabel}>Gastos de envío</Text>
-        <Text style={styles.summaryValGreen}>Gratis</Text>
-      </View>
-      <View style={[styles.summaryRow, styles.totalDivider]}>
-        <Text style={styles.totalLabel}>Total</Text>
+        <Text style={styles.totalLabel}>Total del pedido</Text>
         <Text style={styles.totalVal}>{subtotal.toFixed(2)} €</Text>
       </View>
     </View>

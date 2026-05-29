@@ -73,7 +73,12 @@ export const parseCartResponse = (data: any) => {
     });
   }
 
-  const cartItemsDetails = Array.isArray(cleanData.cart_items) ? cleanData.cart_items : [];
+  // Ordenación Estable (Búnker UX):
+  // Postgres no garantiza el orden de fila en SELECT sin ORDER BY (el cual cambia al hacer UPSERT).
+  // Ordenamos alfabéticamente por product_id en frontend para mantener el orden 100% fijo y agradable.
+  const cartItemsDetails = Array.isArray(cleanData.cart_items) 
+    ? [...cleanData.cart_items].sort((a: any, b: any) => String(a.product_id).localeCompare(String(b.product_id)))
+    : [];
   const cartSubtotal = typeof cleanData.subtotal === 'number' 
     ? cleanData.subtotal 
     : (typeof cleanData.cart_subtotal === 'number' ? cleanData.cart_subtotal : 0);
