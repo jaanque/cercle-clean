@@ -1,14 +1,16 @@
 import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, Pressable, Image } from 'react-native';
+import { SymbolView } from 'expo-symbols';
 
 import CerclePlus from '@/components/homeScreen/cercle-plus/cercle-plus';
 import Header from '@/components/homeScreen/header/header';
 import Locales from '@/components/homeScreen/locales/locales';
-import Ofertas from '@/components/homeScreen/ofertas/ofertas';
 import Sellos from '@/components/homeScreen/sellos/sellos';
-import FloatingCart from '@/components/homeScreen/cart/floating-cart';
 import HomeSkeleton from '@/components/skeletons/homeSkeleton';
 import { useHomeData } from '@/hooks/useHomeData';
+
+// Importación de imágenes locales generadas de alta calidad
+const selectionsBannerImg = require('../../assets/images/home/selections_banner.png');
 
 /**
  * HomeScreen - Pantalla principal de inicio.
@@ -18,23 +20,49 @@ import { useHomeData } from '@/hooks/useHomeData';
 export default function HomeScreen() {
   const { 
     stores, 
-    ofertas, 
     userStamps, 
-    cartCount, 
+    categories,
     loading, 
     error,
   } = useHomeData();
 
   return (
-    <>
-      {/* Cabecera Estática / Barra de Búsqueda y Perfil */}
+    <View style={styles.mainContainer}>
+      {/* Cabecera Estática con Buscador Fijo */}
       <Header />
 
       {/* Contenedor con Scroll Vertical para Contenido Dinámico */}
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView 
+        showsVerticalScrollIndicator={false} 
+        contentContainerStyle={styles.scrollContent}
+        style={styles.scrollView}
+      >
+        
+        {/* Fila horizontal de píldoras de filtro (no fija, se desplaza con el scroll) */}
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false} 
+          contentContainerStyle={styles.chipsContainer}
+          style={styles.chipsScrollView}
+        >
+          {/* Categorías dinámicas de la base de datos */}
+          {categories.map((category) => (
+            <Pressable 
+              key={category.id} 
+              style={[styles.chip, { backgroundColor: category.active_color || '#F5F5F7' }]}
+            >
+              <Text style={styles.chipText}>
+                {category.emoji ? category.emoji + ' ' : ''}{category.title}
+              </Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+
         {loading ? (
           // Skeleton Loader de pulso premium y ultra realista
-          <HomeSkeleton />
+          <View style={{ paddingHorizontal: 16 }}>
+            <HomeSkeleton />
+          </View>
         ) : error ? (
           // Mensaje visual elegante de error de red
           <View style={styles.errorContainer}>
@@ -42,35 +70,147 @@ export default function HomeScreen() {
             <Text style={styles.errorSubtext}>Revisa tu conexión a internet e inténtalo de nuevo.</Text>
           </View>
         ) : (
-          // Vista principal secuencial ordenada con espaciados unificados de 20px
-          <>
-            {/* Tarjeta de Sellos del Usuario (alimentada dinámicamente) */}
-            <Sellos userStamps={userStamps} />
+          // Vista principal ordenada con espaciados
+          <View style={styles.dynamicContent}>
+            
+            {/* --- BANNER DESTACADO DELGADO Y ANCHO (Verde) --- */}
+            <View style={styles.paddingWrapper}>
+              <View style={styles.wideBannerCard}>
+                <View style={styles.bannerTextCol}>
+                  <Text style={styles.selectionsTitle} numberOfLines={2}>
+                    Selecciones{"\n"}queridas para ti
+                  </Text>
+                  <Text style={styles.selectionsSubtitle}>
+                    Belleza y tecnología a tu alcance
+                  </Text>
+                </View>
+                
+                {/* Imagen del banner a la derecha */}
+                <Image 
+                  source={selectionsBannerImg} 
+                  style={styles.wideBannerImage}
+                  resizeMode="cover"
+                />
+              </View>
+            </View>
 
-            {/* Listado Horizontal de Ofertas/Productos dinámicos */}
-            <Ofertas 
-              ofertas={ofertas} 
-            />
+            {/* Tarjeta de Sellos del Usuario */}
+            <View style={styles.paddingWrapper}>
+              <Sellos userStamps={userStamps} />
+            </View>
+
+            {/* Locales Cerca de Ti (cajas en scroll horizontal) */}
+            <Locales stores={stores} loading={false} />
 
             {/* Banner Informativo CerclePlus */}
-            <CerclePlus />
-
-            {/* Listado Vertical de Locales/Tiendas dinámicos */}
-            <Locales stores={stores} loading={false} />
-          </>
+            <View style={styles.paddingWrapper}>
+              <CerclePlus />
+            </View>
+          </View>
         )}
       </ScrollView>
-
-      {/* Carrito Flotante Premium (se dibuja automáticamente al tener elementos) */}
-      <FloatingCart count={cartCount} />
-    </>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollContent: {
-    paddingBottom: 96, // Espacio extra inferior para evitar solapar el carrito flotante
+  mainContainer: {
+    flex: 1,
+    backgroundColor: '#ffffff',
   },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingTop: 0, // Pega el scroll al buscador sin espacio de separación
+    paddingBottom: 110, // Espacio inferior amplio para el menú de navegación
+  },
+  chipsScrollView: {
+    marginTop: 0,
+    marginBottom: 8,
+    paddingVertical: 8,
+  },
+  chipsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 16,
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F7', // Gris suave premium
+    borderRadius: 22, // Esquinas estrictamente a 22px
+    paddingVertical: 7,
+    paddingHorizontal: 14,
+    gap: 6,
+    height: 36,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.02,
+    shadowRadius: 1,
+    elevation: 1,
+  },
+  chipText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#1C1C1E',
+  },
+  
+  // Estructura de contenido dinámico
+  dynamicContent: {
+    width: '100%',
+    gap: 20, // Espaciado simétrico entre secciones principales
+  },
+  paddingWrapper: {
+    paddingHorizontal: 16,
+  },
+
+  // --- NUEVO ESTILO: BANNER DELGADO Y ANCHO (100% Premium) ---
+  wideBannerCard: {
+    width: '100%',
+    height: 105, // Delgado
+    backgroundColor: '#CEEF6D', // Verde vivo de la captura
+    borderRadius: 22, // Bordes estrictamente a 22px
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingLeft: 18,
+    paddingRight: 0,
+    overflow: 'hidden',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  bannerTextCol: {
+    flex: 1.2,
+    justifyContent: 'center',
+    gap: 2,
+  },
+  selectionsTitle: {
+    fontSize: 19,
+    fontWeight: '800',
+    color: '#0F1E00',
+    lineHeight: 22,
+    letterSpacing: -0.4,
+  },
+  selectionsSubtitle: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: 'rgba(15, 30, 0, 0.65)',
+    marginTop: 2,
+  },
+  wideBannerImage: {
+    width: 130,
+    height: '100%',
+    borderRadius: 0,
+    borderTopRightRadius: 22,
+    borderBottomRightRadius: 22,
+    backgroundColor: '#CEEF6D',
+  },
+
   errorContainer: {
     marginTop: 60,
     alignItems: 'center',

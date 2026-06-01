@@ -16,8 +16,6 @@ export default function Sellos({ userStamps }: { userStamps: any[] }) {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 20, // Distancia simétrica de 20px respecto al componente anterior
-    paddingHorizontal: 16,
     width: '100%',
   },
 });

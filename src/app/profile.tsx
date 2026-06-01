@@ -4,7 +4,6 @@ import { SafeAreaView, StyleSheet, View } from 'react-native';
 import ProfileActions from '@/components/profileScreen/guest/profile-actions';
 import ProfileContent from '@/components/profileScreen/guest/profile-content';
 import ProfileLogged from '@/components/profileScreen/logged/profile-logged';
-import ProfileHeader from '@/components/profileScreen/profile-header';
 import ProfileSkeleton from '@/components/skeletons/profileSkeleton';
 import { Colors } from '@/constants/theme';
 import { useAuth } from '@/providers/AuthProvider';
@@ -20,9 +19,6 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        {/* Cabecera superior fija */}
-        <ProfileHeader />
-
         {/* Contenido dinámico o de Carga */}
         <View style={styles.dynamicContent}>
           {isLoading ? (

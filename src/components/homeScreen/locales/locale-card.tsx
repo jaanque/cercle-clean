@@ -52,7 +52,7 @@ export default function LocaleCard({ locale }: LocaleCardProps) {
   const router = useRouter();
 
   return (
-    <Pressable style={styles.card} onPress={() => router.push(`/store/${locale.id}`)}>
+    <Pressable style={styles.card} onPress={() => router.push(`/store/${locale.id}` as any)}>
       {/* Big Image Container with Rating Badge */}
       <View style={styles.imageContainer}>
         <Image source={{ uri: locale.image }} style={styles.image} />
