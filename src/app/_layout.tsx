@@ -19,9 +19,8 @@ export default function RootLayout() {
 
   const navItems = [
     { name: 'Inicio', path: '/', icon: 'house', activeIcon: 'house.fill' },
-    { name: 'Explorar', path: '/explore', icon: 'safari', activeIcon: 'safari.fill' },
-    { name: 'Pedidos', path: '/orders', icon: 'doc.text', activeIcon: 'doc.text.fill' },
-    { name: 'Perfil', path: '/profile', icon: 'person', activeIcon: 'person.fill' },
+    { name: 'Pedidos', path: '/orders', icon: 'bag', activeIcon: 'bag.fill' },
+    { name: 'Perfil', path: '/profile', icon: 'person.crop.circle', activeIcon: 'person.crop.circle.fill' },
   ];
 
   return (
