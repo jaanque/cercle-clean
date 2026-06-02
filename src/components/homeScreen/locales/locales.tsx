@@ -2,6 +2,8 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import LocaleCard, { Store } from './locale-card';
 import LocalesHeader from './locales-header';
 
+import { Colors } from '@/constants/theme';
+
 // Recibe los datos y los renderiza en una lista vertical con las tarjetas originales
 export default function Locales({ stores, loading }: { stores: Store[], loading: boolean }) {
   return (
@@ -9,7 +11,7 @@ export default function Locales({ stores, loading }: { stores: Store[], loading:
       <LocalesHeader />
       <View style={styles.listContainer}>
         {loading ? (
-          <ActivityIndicator size="large" color="#5B2333" style={{ marginVertical: 20 }} />
+          <ActivityIndicator size="large" color={Colors.accent} style={{ marginVertical: 20 }} />
         ) : (
           stores.map((store) => (
             <LocaleCard key={store.id} locale={store} />

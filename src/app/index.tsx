@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View, Pressable, Image } from 'react-native';
 import { SymbolView } from 'expo-symbols';
+import { useRouter } from 'expo-router';
 
 import CerclePlus from '@/components/homeScreen/cercle-plus/cercle-plus';
 import Header from '@/components/homeScreen/header/header';
@@ -8,6 +9,8 @@ import Locales from '@/components/homeScreen/locales/locales';
 import Sellos from '@/components/homeScreen/sellos/sellos';
 import HomeSkeleton from '@/components/skeletons/homeSkeleton';
 import { useHomeData } from '@/hooks/useHomeData';
+import { SelectionsBottomSheet } from '@/components/selections-bottom-sheet';
+import { Colors } from '@/constants/theme';
 
 // Importación de imágenes locales generadas de alta calidad
 const selectionsBannerImg = require('../../assets/images/home/selections_banner.png');
@@ -18,6 +21,7 @@ const selectionsBannerImg = require('../../assets/images/home/selections_banner.
  * Consume los datos y el estado dinámico directamente de useHomeData.
  */
 export default function HomeScreen() {
+  const router = useRouter();
   const { 
     stores, 
     userStamps, 
@@ -25,6 +29,8 @@ export default function HomeScreen() {
     loading, 
     error,
   } = useHomeData();
+
+  const [selectionsVisible, setSelectionsVisible] = useState(false);
 
   return (
     <View style={styles.mainContainer}>
@@ -50,6 +56,7 @@ export default function HomeScreen() {
             <Pressable 
               key={category.id} 
               style={[styles.chip, { backgroundColor: category.active_color || '#F5F5F7' }]}
+              onPress={() => router.push({ pathname: '/explore', params: { q: category.title } } as any)}
             >
               <Text style={styles.chipText}>
                 {category.emoji ? category.emoji + ' ' : ''}{category.title}
@@ -75,7 +82,13 @@ export default function HomeScreen() {
             
             {/* --- BANNER DESTACADO DELGADO Y ANCHO (Verde) --- */}
             <View style={styles.paddingWrapper}>
-              <View style={styles.wideBannerCard}>
+              <Pressable 
+                style={({ pressed }) => [
+                  styles.wideBannerCard,
+                  pressed && { opacity: 0.95, transform: [{ scale: 0.99 }] }
+                ]}
+                onPress={() => setSelectionsVisible(true)}
+              >
                 <View style={styles.bannerTextCol}>
                   <Text style={styles.selectionsTitle} numberOfLines={2}>
                     Selecciones{"\n"}queridas para ti
@@ -91,7 +104,7 @@ export default function HomeScreen() {
                   style={styles.wideBannerImage}
                   resizeMode="cover"
                 />
-              </View>
+              </Pressable>
             </View>
 
             {/* Tarjeta de Sellos del Usuario */}
@@ -109,6 +122,12 @@ export default function HomeScreen() {
           </View>
         )}
       </ScrollView>
+
+      {/* Bottom Sheet de Selecciones Queridas Para Ti */}
+      <SelectionsBottomSheet 
+        visible={selectionsVisible} 
+        onClose={() => setSelectionsVisible(false)} 
+      />
     </View>
   );
 }
@@ -166,11 +185,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
 
-  // --- NUEVO ESTILO: BANNER DELGADO Y ANCHO (100% Premium) ---
   wideBannerCard: {
     width: '100%',
     height: 105, // Delgado
-    backgroundColor: '#CEEF6D', // Verde vivo de la captura
+    backgroundColor: Colors.accent, // Verde oliva corporativo
     borderRadius: 22, // Bordes estrictamente a 22px
     flexDirection: 'row',
     alignItems: 'center',
@@ -192,14 +210,14 @@ const styles = StyleSheet.create({
   selectionsTitle: {
     fontSize: 19,
     fontWeight: '800',
-    color: '#0F1E00',
+    color: '#ffffff',
     lineHeight: 22,
     letterSpacing: -0.4,
   },
   selectionsSubtitle: {
     fontSize: 11,
     fontWeight: '600',
-    color: 'rgba(15, 30, 0, 0.65)',
+    color: 'rgba(255, 255, 255, 0.85)',
     marginTop: 2,
   },
   wideBannerImage: {
@@ -208,7 +226,7 @@ const styles = StyleSheet.create({
     borderRadius: 0,
     borderTopRightRadius: 22,
     borderBottomRightRadius: 22,
-    backgroundColor: '#CEEF6D',
+    backgroundColor: Colors.accent,
   },
 
   errorContainer: {

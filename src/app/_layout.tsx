@@ -20,8 +20,9 @@ export default function RootLayout() {
   const pathname = usePathname();
   const router = useRouter();
 
-  // Ocultar el menú de navegación inferior en las pantallas de inicio de sesión, registro y explorar
-  const hideNavBar = pathname === '/login' || pathname === '/register' || pathname === '/explore';
+  // Ocultar el menú de navegación inferior en cualquier pantalla que no pertenezca al menú principal
+  const menuPaths = ['/', '/orders', '/profile'];
+  const hideNavBar = !menuPaths.includes(pathname);
 
   const navItems = [
     { name: 'Inicio', path: '/', icon: 'house', activeIcon: 'house.fill' },
@@ -118,7 +119,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   activeNavItem: {
-    backgroundColor: 'rgba(91, 35, 51, 0.08)', // Tono suave de Colors.accent (#5B2333)
+    backgroundColor: 'rgba(72, 110, 60, 0.1)', // Tono suave de medium-dark green (#486E3C)
   },
   activeNavText: {
     color: Colors.accent,

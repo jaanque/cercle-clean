@@ -19,6 +19,7 @@ interface OfertaCardProps {
   oferta: Product;
   fullWidth?: boolean;
   grid?: boolean;
+  hidePickup?: boolean;
 }
 
 const formatReviewsCount = (reviewsCount: string | undefined | null) => {
@@ -45,25 +46,25 @@ const renderPickupText = (id: string) => {
   if (idx === 0) {
     return (
       <Text style={styles.pickupText}>
-        Recogida <Text style={styles.pickupBold}>GRATIS hoy</Text> en tienda en <Text style={styles.pickupBold}>1h</Text>
+        Recogida hoy en <Text style={styles.pickupBold}>1h</Text>
       </Text>
     );
   } else if (idx === 1) {
     return (
       <Text style={styles.pickupText}>
-        Pasa a buscarlo <Text style={styles.pickupBold}>GRATIS hoy</Text> en <Text style={styles.pickupBold}>2h</Text>
+        Recogida hoy en <Text style={styles.pickupBold}>2h</Text>
       </Text>
     );
   } else if (idx === 2) {
     return (
       <Text style={styles.pickupText}>
-        Disponible para recoger en <Text style={styles.pickupBold}>45 min</Text>
+        Recogida hoy en <Text style={styles.pickupBold}>45 min</Text>
       </Text>
     );
   } else {
     return (
       <Text style={styles.pickupText}>
-        Recogida <Text style={styles.pickupBold}>mañana</Text> en tu tienda local
+        Recogida disponible <Text style={styles.pickupBold}>mañana</Text>
       </Text>
     );
   }
@@ -97,7 +98,7 @@ const renderStars = (ratingStr: string) => {
   );
 };
 
-export default function OfertaCard({ oferta, fullWidth = false, grid = false }: OfertaCardProps) {
+export default function OfertaCard({ oferta, fullWidth = false, grid = false, hidePickup = false }: OfertaCardProps) {
   const { integer, decimal } = parsePrice(oferta.price);
 
   return (
@@ -140,9 +141,11 @@ export default function OfertaCard({ oferta, fullWidth = false, grid = false }: 
         </View>
 
         {/* Tiempo de recogida local */}
-        <View style={styles.pickupContainer}>
-          {renderPickupText(oferta.id)}
-        </View>
+        {!hidePickup && (
+          <View style={styles.pickupContainer}>
+            {renderPickupText(oferta.id)}
+          </View>
+        )}
 
         {/* Botón de acción con curvatura estricta de 22px */}
         <View style={styles.actionContainer}>
@@ -278,13 +281,13 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   pickupText: {
-    fontSize: 12, // Aumentado para leerse con absoluta claridad
-    color: '#565959',
-    lineHeight: 16,
+    fontSize: 11,
+    color: '#8E8E93',
+    lineHeight: 14,
   },
   pickupBold: {
-    fontWeight: '700',
-    color: '#0F1111',
+    fontWeight: '600',
+    color: '#666666',
   },
   actionContainer: {
     width: '100%',

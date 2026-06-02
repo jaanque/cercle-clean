@@ -21,6 +21,8 @@ export default function SellosCard({ userStamps }: { userStamps: any[] }) {
   const handlePress = () => {
     if (!user) {
       router.push('/login');
+    } else {
+      router.push('/stamps' as any);
     }
   };
 
@@ -44,7 +46,7 @@ export default function SellosCard({ userStamps }: { userStamps: any[] }) {
         <SymbolView
           name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }}
           size={16}
-          tintColor="#5B2333"
+          tintColor={Colors.accent}
           weight="semibold"
           style={styles.chevron}
         />

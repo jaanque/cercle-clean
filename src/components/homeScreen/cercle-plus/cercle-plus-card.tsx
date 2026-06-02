@@ -5,9 +5,10 @@ import { Colors } from '@/constants/theme';
 
 interface CerclePlusCardProps {
   compact?: boolean;
+  onPress?: () => void;
 }
 
-export default function CerclePlusCard({ compact = false }: CerclePlusCardProps) {
+export default function CerclePlusCard({ compact = false, onPress }: CerclePlusCardProps) {
   const features = [
     'Sin comisiones en tus pedidos',
     'Acceso exclusivo e ilimitado a Cercle AI',
@@ -15,7 +16,14 @@ export default function CerclePlusCard({ compact = false }: CerclePlusCardProps)
   ];
 
   return (
-    <View style={[styles.card, compact && styles.compactCard]}>
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.card,
+        compact && styles.compactCard,
+        pressed && { opacity: 0.93, transform: [{ scale: 0.985 }] }
+      ]}
+    >
       {/* Header Row */}
       <View style={[styles.headerRow, compact && styles.compactHeaderRow]}>
         <View style={styles.logoContainer}>
@@ -48,16 +56,16 @@ export default function CerclePlusCard({ compact = false }: CerclePlusCardProps)
           ))}
         </View>
       )}
-    </View>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: Colors.background2,
+    backgroundColor: 'rgba(72, 110, 60, 0.08)', // Beautiful tinted olive green background
     borderRadius: 22,
     borderWidth: 1,
-    borderColor: '#EAEAEA',
+    borderColor: 'rgba(72, 110, 60, 0.15)', // Matching subtle border
     padding: 20,
     width: '100%',
   },
@@ -75,34 +83,34 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 22,
     fontWeight: '800',
-    color: Colors.text,
+    color: '#0F1E00', // Premium dark green text
   },
   plusBadge: {
     backgroundColor: Colors.accent,
     width: 22,
     height: 22,
-    borderRadius: 11,
+    borderRadius: 6, // Square-ish modern badge like the bottomsheet
     justifyContent: 'center',
     alignItems: 'center',
+    transform: [{ rotate: '-4deg' }], // Playful matching rotation!
   },
   plusText: {
     color: '#ffffff',
     fontSize: 14,
-    fontWeight: '800',
+    fontWeight: '900',
     lineHeight: 16,
   },
   button: {
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#EAEAEA',
+    backgroundColor: Colors.accent, // Premium solid button
     borderRadius: 22,
-    paddingVertical: 10,
-    paddingHorizontal: 18,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderWidth: 0,
   },
   buttonText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: Colors.text,
+    fontSize: 13.5,
+    fontWeight: '800',
+    color: '#ffffff', // Crisp white text
   },
   featuresList: {
     gap: 10,
@@ -113,7 +121,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   checkBadge: {
-    backgroundColor: '#10B981', // Vibrant green
+    backgroundColor: Colors.accent, // Matching cohesive badge color
     width: 18,
     height: 18,
     borderRadius: 9,
@@ -122,8 +130,8 @@ const styles = StyleSheet.create({
   },
   featureText: {
     fontSize: 14,
-    color: '#4A5568',
-    fontWeight: '500',
+    color: '#3A4D39', // Premium dark slate green text
+    fontWeight: '600',
   },
   compactCard: {
     paddingVertical: 12,
@@ -131,6 +139,6 @@ const styles = StyleSheet.create({
     borderRadius: 22,
   },
   compactHeaderRow: {
-    marginBottom: 0, // No bottom margin because there are no features below it
+    marginBottom: 0,
   },
 });

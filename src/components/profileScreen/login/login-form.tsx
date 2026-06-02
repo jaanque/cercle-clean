@@ -105,7 +105,7 @@ export default function LoginForm() {
       {/* Botón superior de regreso y título */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <SymbolView name="chevron.left" size={24} tintColor={Colors.text} />
+          <SymbolView name="chevron.left" size={20} tintColor="#1C1C1E" weight="bold" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Iniciar Sesión</Text>
         <View style={{ width: 40 }} />
@@ -187,9 +187,14 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   backButton: {
-    padding: 8,
-    borderRadius: 22,
-    backgroundColor: Colors.background2,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F5F5F7',
+    borderWidth: 1,
+    borderColor: '#EAEAEA',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   headerTitle: {
     fontSize: 18,

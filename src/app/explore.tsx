@@ -179,30 +179,57 @@ export default function ExploreScreen() {
     (cat) => robustMatch(cat.title, query)
   );
 
-  const matchedProducts = ofertas.filter((product) => {
-    const storeName = stores.find((s) => s.id === product.store_id)?.name || '';
-    return robustMatch(product.name, query) || robustMatch(storeName, query);
-  });
-
-  const matchedStores = stores.filter(
-    (store) => 
-      robustMatch(store.name, query) || 
-      robustMatch(store.tagline, query) ||
-      robustMatch(store.location, query) ||
-      // La tienda vende un producto que coincide con la búsqueda
-      matchedProducts.some((product) => product.store_id === store.id)
+  // Si la búsqueda coincide con una categoría, extraemos los términos significativos para ampliar los resultados de comercios y productos
+  const categoryKeywords = matchedCategories.flatMap((cat) =>
+    cat.title
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .split(/\s+/)
+      .filter((word: string) => word.length > 3)
   );
 
-  // Obtener recomendaciones de títulos parecidos en tiempo real con motor de coincidencia robusta
+  const matchedProducts = ofertas.filter((product) => {
+    const storeName = stores.find((s) => s.id === product.store_id)?.name || '';
+    const matchesDirect = robustMatch(product.name, query) || robustMatch(storeName, query);
+    
+    // Coincidencia secundaria si se busca por categoría
+    const matchesCategory = categoryKeywords.some((keyword) =>
+      robustMatch(product.name, keyword) || robustMatch(storeName, keyword)
+    );
+    
+    return matchesDirect || matchesCategory;
+  });
+
+  const matchedStores = stores.filter((store) => {
+    const matchesDirect = 
+      robustMatch(store.name, query) || 
+      robustMatch(store.tagline, query) ||
+      robustMatch(store.location, query);
+      
+    // Coincidencia secundaria si se busca por categoría
+    const matchesCategory = categoryKeywords.some((keyword) =>
+      robustMatch(store.name, keyword) || 
+      robustMatch(store.tagline, keyword) ||
+      robustMatch(store.location, keyword)
+    );
+    
+    // La tienda vende un producto que coincide con la búsqueda
+    const matchesProduct = matchedProducts.some((product) => product.store_id === store.id);
+    
+    return matchesDirect || matchesCategory || matchesProduct;
+  });
+
+  // Obtener recomendaciones de títulos parecidos en tiempo real (excluyendo el término de búsqueda actual por ser redundante)
   const suggestions = [
     ...ofertas
-      .filter((prod) => robustMatch(prod.name, query))
+      .filter((prod) => robustMatch(prod.name, query) && prod.name.toLowerCase() !== query.toLowerCase())
       .map((prod) => ({ id: `prod-${prod.id}`, text: prod.name, type: 'product' })),
     ...categories
-      .filter((cat) => robustMatch(cat.title, query))
+      .filter((cat) => robustMatch(cat.title, query) && cat.title.toLowerCase() !== query.toLowerCase())
       .map((cat) => ({ id: `cat-${cat.id}`, text: cat.title, type: 'category' })),
     ...stores
-      .filter((store) => robustMatch(store.name, query))
+      .filter((store) => robustMatch(store.name, query) && store.name.toLowerCase() !== query.toLowerCase())
       .map((store) => ({ id: `store-${store.id}`, text: store.name, type: 'store' })),
   ]
     .filter((value, index, self) => self.findIndex((t) => t.text.toLowerCase() === value.text.toLowerCase()) === index)
