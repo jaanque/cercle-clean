@@ -14,8 +14,7 @@ export function useHomeData() {
 
   const { session } = useAuth();
 
-  useEffect(() => {
-    let isMounted = true;
+  const fetchData = async () => {
     setLoading(true);
     setError(null);
 
@@ -27,48 +26,42 @@ export function useHomeData() {
     const userLat = 41.63;
     const userLon = 0.64;
 
-    // Pasamos las coordenadas a la Edge Function
-    const fetchUrl = `${supabaseUrl}/functions/v1/select-stores?lat=${userLat}&lon=${userLon}`;
+    // Pasamos las coordenadas y el límite a la Edge Function
+    const fetchUrl = `${supabaseUrl}/functions/v1/select-stores?lat=${userLat}&lon=${userLon}&limit=10`;
 
-    fetch(fetchUrl, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authorizationToken}`,
-      },
-    })
-      .then(async (response) => {
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Error de servidor (${response.status}): ${errorText}`);
-        }
-        return response.json();
-      })
-      .then((data) => {
-        console.log('--- FETCHED HOME DATA ---', data);
-        if (isMounted && data) {
-          // El backend ya nos devuelve la lista filtrada y ordenada perfectamente
-          setStores(data.stores || []);
-          setOfertas(data.products || []);
-          setUserStamps(data.user_stamps || []);
-          setCategories(data.categories || []);
-          setRecentSearches(data.recent_searches || []);
-        }
-      })
-      .catch((err) => {
-        if (isMounted) {
-          setError(err.message || 'Ocurrió un error inesperado al conectar con el servidor.');
-        }
-      })
-      .finally(() => {
-        if (isMounted) {
-          setLoading(false);
-        }
+    try {
+      const response = await fetch(fetchUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authorizationToken}`,
+        },
       });
 
-    return () => {
-      isMounted = false;
-    };
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Error de servidor (${response.status}): ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log('--- FETCHED HOME DATA ---', data);
+      if (data) {
+        // El backend ya nos devuelve la lista filtrada y ordenada perfectamente
+        setStores(data.stores || []);
+        setOfertas(data.products || []);
+        setUserStamps(data.user_stamps || []);
+        setCategories(data.categories || []);
+        setRecentSearches(data.recent_searches || []);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Ocurrió un error inesperado al conectar con el servidor.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
   }, [session]);
 
   return {
@@ -79,5 +72,6 @@ export function useHomeData() {
     recentSearches,
     loading,
     error,
+    refetch: fetchData,
   };
 }

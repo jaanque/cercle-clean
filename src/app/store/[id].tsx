@@ -15,6 +15,7 @@ import { useHomeData } from '@/hooks/useHomeData';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getStoreDistance } from '@/components/homeScreen/locales/locale-card';
 import OfertaCard from '@/components/homeScreen/ofertas/oferta-card';
+import StoreDetailSkeleton from '@/components/skeletons/storeDetailSkeleton';
 
 // Modular Store Detail Components
 import StoreHeader from '@/components/storeDetail/store-header';
@@ -47,11 +48,7 @@ export default function StoreDetailsScreen() {
   }, 0).toFixed(2);
 
   if (loading) {
-    return (
-      <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Colors.accent} />
-      </SafeAreaView>
-    );
+    return <StoreDetailSkeleton />;
   }
 
   if (error || !store) {

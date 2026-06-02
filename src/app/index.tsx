@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, Pressable, Image } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, Pressable, Image, RefreshControl } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import { useRouter } from 'expo-router';
 
@@ -28,9 +28,17 @@ export default function HomeScreen() {
     categories,
     loading, 
     error,
+    refetch,
   } = useHomeData();
 
   const [selectionsVisible, setSelectionsVisible] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  };
 
   return (
     <View style={styles.mainContainer}>
@@ -42,6 +50,14 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false} 
         contentContainerStyle={styles.scrollContent}
         style={styles.scrollView}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[Colors.accent]}
+            tintColor={Colors.accent}
+          />
+        }
       >
         
         {/* Fila horizontal de píldoras de filtro (no fija, se desplaza con el scroll) */}
@@ -55,10 +71,21 @@ export default function HomeScreen() {
           {categories.map((category) => (
             <Pressable 
               key={category.id} 
-              style={[styles.chip, { backgroundColor: category.active_color || '#F5F5F7' }]}
-              onPress={() => router.push({ pathname: '/explore', params: { q: category.title } } as any)}
+              style={[
+                styles.chip, 
+                category.is_ai 
+                  ? { backgroundColor: '#ffffff', borderWidth: 1.5, borderColor: '#4F46E5' }
+                  : { backgroundColor: category.active_color || '#F5F5F7' }
+              ]}
+              onPress={() => {
+                if (category.is_ai) {
+                  router.push('/ai-chat');
+                } else {
+                  router.push({ pathname: '/explore', params: { q: category.title } } as any);
+                }
+              }}
             >
-              <Text style={styles.chipText}>
+              <Text style={[styles.chipText, category.is_ai && { color: '#4F46E5' }]}>
                 {category.emoji ? category.emoji + ' ' : ''}{category.title}
               </Text>
             </Pressable>

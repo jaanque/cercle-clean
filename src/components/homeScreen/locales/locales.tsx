@@ -13,7 +13,7 @@ export default function Locales({ stores, loading }: { stores: Store[], loading:
         {loading ? (
           <ActivityIndicator size="large" color={Colors.accent} style={{ marginVertical: 20 }} />
         ) : (
-          stores.map((store) => (
+          stores.slice(0, 10).map((store) => (
             <LocaleCard key={store.id} locale={store} />
           ))
         )}

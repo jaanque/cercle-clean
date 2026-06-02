@@ -17,6 +17,7 @@ export interface Store {
   location?: string;
   latitude?: number | null;
   longitude?: number | null;
+  category_id?: number | null;
 }
 
 interface LocaleCardProps {

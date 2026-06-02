@@ -20,7 +20,7 @@ export default function ProfileScreen() {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         {/* Contenido dinámico o de Carga */}
-        <View style={styles.dynamicContent}>
+        <View style={[styles.dynamicContent, user && { justifyContent: 'flex-start', paddingTop: 20 }]}>
           {isLoading ? (
             // Loader de carga premium animado
             <ProfileSkeleton />

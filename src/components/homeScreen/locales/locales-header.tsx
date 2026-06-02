@@ -1,12 +1,15 @@
 import React from 'react';
 import { View, StyleSheet, Text, Pressable } from 'react-native';
 import { Colors } from '@/constants/theme';
+import { useRouter } from 'expo-router';
 
 export default function LocalesHeader() {
+  const router = useRouter();
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Cerca de ti</Text>
-      <Pressable style={styles.button}>
+      <Pressable style={styles.button} onPress={() => router.push('/stores-list')}>
         <Text style={styles.buttonText}>Ver más</Text>
       </Pressable>
     </View>

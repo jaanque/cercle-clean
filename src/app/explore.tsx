@@ -67,14 +67,30 @@ export default function ExploreScreen() {
   const params = useLocalSearchParams();
   const query = (params.q as string || '').trim().toLowerCase();
   
-  // Es un estado de búsqueda activo cuando el usuario ha escrito algo.
-  const isSearchActive = query.length > 0;
-
   const { user } = useAuth();
   const { categories, stores, ofertas, recentSearches, loading } = useHomeData();
 
   // Estado local sincronizado para opacidad instantánea en la UI al borrar/añadir
   const [localRecentSearches, setLocalRecentSearches] = useState<any[] | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  // Sincronizar el parámetro de búsqueda q al inicio
+  useEffect(() => {
+    if (params.q) {
+      const queryStr = (params.q as string).trim();
+      const matchedCat = categories.find(
+        (cat) => cat.title.toLowerCase() === queryStr.toLowerCase()
+      );
+      if (matchedCat) {
+        setSelectedCategory(matchedCat.title);
+        // Limpiamos el texto de búsqueda para que la barra de búsqueda esté limpia y todos los chips se muestren
+        router.setParams({ q: '' });
+      }
+    }
+  }, [params.q, categories]);
+
+  // Es un estado de búsqueda activo cuando el usuario ha escrito algo o tiene una categoría seleccionada.
+  const isSearchActive = query.length > 0 || selectedCategory !== null;
 
   // Efecto que re-consulta de Supabase las búsquedas recientes reales en tiempo real cuando se borra el buscador o cambia el estado
   useEffect(() => {
@@ -189,8 +205,14 @@ export default function ExploreScreen() {
       .filter((word: string) => word.length > 3)
   );
 
+  // Obtener el objeto de categoría activo si existe
+  const activeCategoryObj = selectedCategory
+    ? categories.find((cat) => cat.title.toLowerCase() === selectedCategory.toLowerCase())
+    : null;
+
   const matchedProducts = ofertas.filter((product) => {
-    const storeName = stores.find((s) => s.id === product.store_id)?.name || '';
+    const productStore = stores.find((s) => s.id === product.store_id);
+    const storeName = productStore?.name || '';
     const matchesDirect = robustMatch(product.name, query) || robustMatch(storeName, query);
     
     // Coincidencia secundaria si se busca por categoría
@@ -198,7 +220,13 @@ export default function ExploreScreen() {
       robustMatch(product.name, keyword) || robustMatch(storeName, keyword)
     );
     
-    return matchesDirect || matchesCategory;
+    // Filtro por categoría seleccionada en los chips
+    const matchesSelectedCategory = !activeCategoryObj || 
+      (productStore && productStore.category_id === activeCategoryObj.id) ||
+      product.name.toLowerCase().includes(activeCategoryObj.title.toLowerCase()) ||
+      storeName.toLowerCase().includes(activeCategoryObj.title.toLowerCase());
+    
+    return (matchesDirect || matchesCategory) && matchesSelectedCategory;
   });
 
   const matchedStores = stores.filter((store) => {
@@ -217,7 +245,13 @@ export default function ExploreScreen() {
     // La tienda vende un producto que coincide con la búsqueda
     const matchesProduct = matchedProducts.some((product) => product.store_id === store.id);
     
-    return matchesDirect || matchesCategory || matchesProduct;
+    // Filtro por categoría seleccionada en los chips
+    const matchesSelectedCategory = !activeCategoryObj || 
+      store.category_id === activeCategoryObj.id ||
+      store.name.toLowerCase().includes(activeCategoryObj.title.toLowerCase()) ||
+      (store.tagline && store.tagline.toLowerCase().includes(activeCategoryObj.title.toLowerCase()));
+    
+    return (matchesDirect || matchesCategory || matchesProduct) && matchesSelectedCategory;
   });
 
   // Obtener recomendaciones de títulos parecidos en tiempo real (excluyendo el término de búsqueda actual por ser redundante)
@@ -256,17 +290,45 @@ export default function ExploreScreen() {
             contentContainerStyle={styles.chipsContainer}
             style={styles.chipsScrollView}
           >
-            {matchedCategories.map((category) => (
-              <Pressable 
-                key={category.id} 
-                style={[styles.chip, { backgroundColor: category.active_color || '#F5F5F7' }]}
-                onPress={() => handleSelectSearch(category.title)}
-              >
-                <Text style={styles.chipText}>
-                  {category.emoji ? category.emoji + ' ' : ''}{category.title}
-                </Text>
-              </Pressable>
-            ))}
+            {matchedCategories.map((category) => {
+              const isSelected = selectedCategory === category.title;
+              return (
+                <Pressable 
+                  key={category.id} 
+                  style={[
+                    styles.chip, 
+                    category.is_ai 
+                      ? { backgroundColor: '#ffffff', borderWidth: 1.5, borderColor: '#4F46E5' }
+                      : isSelected 
+                        ? { backgroundColor: Colors.accent }
+                        : { backgroundColor: category.active_color || '#F5F5F7' }
+                  ]}
+                  onPress={() => {
+                    if (category.is_ai) {
+                      router.push('/ai-chat');
+                    } else {
+                      setSelectedCategory(isSelected ? null : category.title);
+                    }
+                  }}
+                >
+                  {isSelected && !category.is_ai && (
+                    <SymbolView name="checkmark" size={11} tintColor="#ffffff" weight="bold" />
+                  )}
+                  <Text 
+                    style={[
+                      styles.chipText, 
+                      category.is_ai 
+                        ? { color: '#4F46E5' } 
+                        : isSelected 
+                          ? { color: '#ffffff' }
+                          : { color: '#1C1C1E' }
+                    ]}
+                  >
+                    {category.emoji ? category.emoji + ' ' : ''}{category.title}
+                  </Text>
+                </Pressable>
+              );
+            })}
           </ScrollView>
         )}
 
@@ -348,7 +410,7 @@ export default function ExploreScreen() {
           <View style={styles.resultsContainer}>
 
             {/* Recomendaciones de títulos parecidos en tiempo real */}
-            {suggestions.length > 0 && (
+            {query.length > 0 && suggestions.length > 0 && (
               <View style={styles.section}>
                 <Text style={styles.resultHeaderTitle}>Recomendaciones de búsqueda</Text>
                 <View style={styles.flatRecentList}>
