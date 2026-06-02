@@ -4,28 +4,47 @@ import {
   Text,
   View,
   ScrollView,
-  Pressable,
   ActivityIndicator,
   Alert,
+  Pressable,
 } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Colors } from '@/constants/theme';
 import { useHomeData } from '@/hooks/useHomeData';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getStoreDistance } from '@/components/homeScreen/locales/locale-card';
 import OfertaCard from '@/components/homeScreen/ofertas/oferta-card';
+
+// Modular Store Detail Components
+import StoreHeader from '@/components/storeDetail/store-header';
+import StoreHero from '@/components/storeDetail/store-hero';
+import StoreInfo from '@/components/storeDetail/store-info';
+import StoreActions from '@/components/storeDetail/store-actions';
+import StoreFloatingCart from '@/components/storeDetail/store-floating-cart';
 
 export default function StoreDetailsScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
   const { stores, ofertas, loading, error } = useHomeData();
+  const insets = useSafeAreaInsets();
 
   // Find current store
   const store = stores.find((s) => s.id === id);
 
   // Filter products for this store
   const storeProducts = ofertas.filter((p) => p.store_id === id);
+
+  // Local cart state
+  const [cart, setCart] = React.useState<Record<string, number>>({});
+
+  const totalItems = Object.values(cart).reduce((sum, qty) => sum + qty, 0);
+  const totalPrice = Object.entries(cart).reduce((sum, [productId, qty]) => {
+    const prod = storeProducts.find(p => p.id === productId);
+    if (!prod) return sum;
+    const priceNum = parseFloat(prod.price.replace(/[^0-9.,]/g, '').replace(',', '.')) || 0;
+    return sum + priceNum * qty;
+  }, 0).toFixed(2);
 
   if (loading) {
     return (
@@ -48,85 +67,63 @@ export default function StoreDetailsScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-      {/* Header Fijo con el nombre del Comercio */}
-      <View style={styles.header}>
-        <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <SymbolView name="chevron.left" size={20} tintColor="#1C1C1E" weight="bold" />
-        </Pressable>
-        <Pressable style={({ pressed }) => [styles.ellipsisBtn, pressed && { opacity: 0.7 }]}>
-          <SymbolView name="ellipsis" size={20} tintColor="#1C1C1E" weight="bold" />
-        </Pressable>
-      </View>
+    <View style={styles.container}>
+      {/* Floating Header */}
+      <StoreHeader 
+        onBack={() => router.back()} 
+        onMore={() => Alert.alert('Opciones', 'Más opciones no disponibles en esta versión.')}
+        topInset={insets.top}
+      />
 
       <ScrollView 
         showsVerticalScrollIndicator={false} 
         contentContainerStyle={styles.scrollContent}
       >
-        {/* PROFILE SECTION */}
-        <View style={styles.profileSection}>
-          <Text style={styles.storeNameText}>{store.name}</Text>
-          
-          {/* Rating and Distance Row (Without Cercle+) */}
-          <View style={styles.storeMetaRow}>
-            <Text style={styles.storeMetaText}>
-              {store.rating} <SymbolView name="star.fill" size={12} tintColor="#F59E0B" /> {
-                store.reviews_count 
-                  ? (store.reviews_count.includes('(') ? store.reviews_count : `(${store.reviews_count})`) 
-                  : '(1.5k+)'
-              } • {getStoreDistance(store)}
-            </Text>
-          </View>
+        {/* Banner and Overlapping Logo */}
+        <StoreHero 
+          imageUri={store.image} 
+          logoUri={store.logo} 
+        />
 
-          {/* Location row */}
-          <View style={styles.addressRow}>
-            <SymbolView name="mappin.and.ellipse" size={12} tintColor="#64748B" />
-            <Text style={styles.addressText}>{store.location || 'Barcelona, España'}</Text>
-          </View>
-        </View>
+        {/* Store Profile details (Name, Tagline, Address, Stats tags) */}
+        <StoreInfo
+          name={store.name}
+          tagline={store.tagline}
+          location={store.location}
+          rating={store.rating}
+          reviewsCount={store.reviews_count}
+          distance={getStoreDistance(store)}
+          deliveryTime={store.delivery_time}
+        />
 
-        {/* SINGLE BENEFIT BLOCK: Real Pickup Time */}
-        <View style={styles.singleBenefitContainer}>
-          <SymbolView name="clock.fill" size={13} tintColor="#64748B" style={{ marginRight: 6 }} />
-          <Text style={styles.singleBenefitText}>
-            Listo para recoger en: <Text style={styles.singleBenefitBold}>{store.delivery_time ? store.delivery_time.replace(/Listo en /i, '') : '15 min'}</Text>
-          </Text>
-        </View>
+        {/* Contact actions row */}
+        <StoreActions
+          onCall={() => Alert.alert('Llamar', `Llamando al comercio ${store.name}...`)}
+          onDirections={() => Alert.alert('Cómo llegar', `Abriendo mapa para navegar a ${store.location || 'Barcelona'}...`)}
+          onWeb={() => Alert.alert('Web', `Abriendo sitio web de ${store.name}...`)}
+        />
 
-        {/* DISCRETE CONTACT & NAVIGATION ACTIONS ROW */}
-        <View style={styles.storeContactActionsRow}>
-          <Pressable 
-            style={({ pressed }) => [styles.contactActionBtn, pressed && { opacity: 0.75 }]}
-            onPress={() => Alert.alert('Llamar', `Llamando al comercio ${store.name}...`)}
-          >
-            <SymbolView name="phone.fill" size={11} tintColor="#475569" />
-            <Text style={styles.contactActionBtnText}>Llamar</Text>
-          </Pressable>
-
-          <Pressable 
-            style={({ pressed }) => [styles.contactActionBtn, pressed && { opacity: 0.75 }]}
-            onPress={() => Alert.alert('Cómo llegar', `Abriendo mapa para navegar a ${store.location || 'Barcelona'}...`)}
-          >
-            <SymbolView name="arrow.triangle.turn.up.right.diamond.fill" size={11} tintColor="#475569" />
-            <Text style={styles.contactActionBtnText}>Cómo llegar</Text>
-          </Pressable>
-
-          <Pressable 
-            style={({ pressed }) => [styles.contactActionBtn, pressed && { opacity: 0.75 }]}
-            onPress={() => Alert.alert('Web', `Abriendo sitio web de ${store.name}...`)}
-          >
-            <SymbolView name="globe" size={11} tintColor="#475569" />
-            <Text style={styles.contactActionBtnText}>Web</Text>
-          </Pressable>
-        </View>
-
-        {/* PRODUCTS SECTION (Grid list layout like before but without pickup info) */}
+        {/* PRODUCTS SECTION */}
         <View style={styles.productsSection}>
-          <Text style={styles.sectionTitle}>Excedentes del día</Text>
           {storeProducts.length > 0 ? (
             <View style={styles.productsGrid}>
               {storeProducts.map((prod) => (
-                <OfertaCard key={prod.id} oferta={prod} grid={true} hidePickup={true} />
+                <OfertaCard 
+                  key={prod.id} 
+                  oferta={prod} 
+                  grid={true} 
+                  hidePickup={true} 
+                  quantity={cart[prod.id] || 0}
+                  onQuantityChange={(newQty) => setCart(prev => {
+                    const next = { ...prev };
+                    if (newQty === 0) {
+                      delete next[prod.id];
+                    } else {
+                      next[prod.id] = newQty;
+                    }
+                    return next;
+                  })}
+                />
               ))}
             </View>
           ) : (
@@ -137,15 +134,23 @@ export default function StoreDetailsScreen() {
           )}
         </View>
 
-        {/* Extra margin bottom for custom tabs nav spacing */}
-        <View style={styles.extraSpacing} />
+        {/* Bottom space for safe scrolling */}
+        <View style={{ height: 40 }} />
       </ScrollView>
-    </SafeAreaView>
+
+      {/* Floating Cart Banner */}
+      <StoreFloatingCart
+        totalItems={totalItems}
+        totalPrice={totalPrice}
+        bottomInset={insets.bottom}
+        onCheckout={() => Alert.alert('Completar Pedido', `¿Deseas tramitar tu pedido por un valor de ${totalPrice} € (${totalItems} excedentes)?`)}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
@@ -173,7 +178,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.accent,
     paddingVertical: 10,
     paddingHorizontal: 20,
-    borderRadius: 22,
+    borderRadius: 22, // rounded strictly to 22px
   },
   errorButtonText: {
     color: '#FFFFFF',
@@ -185,135 +190,9 @@ const styles = StyleSheet.create({
     paddingTop: 0,
     paddingBottom: 100,
   },
-
-  // STANDARD TOP FIXED HEADER
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    backgroundColor: '#ffffff',
-    zIndex: 1000,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F5F5F7',
-    borderWidth: 1,
-    borderColor: '#EAEAEA',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  ellipsisBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F5F5F7',
-    borderWidth: 1,
-    borderColor: '#EAEAEA',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  // PROFILE INFO SECTION
-  profileSection: {
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    marginTop: 12,
-    marginBottom: 20,
-  },
-  storeNameText: {
-    fontSize: 26,
-    fontWeight: '900',
-    color: '#0F172A',
-    textAlign: 'center',
-    letterSpacing: -0.6,
-  },
-  storeMetaRow: {
-    marginTop: 4,
-  },
-  storeMetaText: {
-    fontSize: 14.5,
-    fontWeight: '700',
-    color: '#0F172A',
-  },
-  addressRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 6,
-    gap: 4,
-  },
-  addressText: {
-    fontSize: 13,
-    color: '#64748B',
-    fontWeight: '600',
-  },
-
-  // SINGLE BENEFIT BLOCK STYLE
-  singleBenefitContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: 16,
-    marginHorizontal: 20,
-    paddingVertical: 12,
-    backgroundColor: '#F8FAFC',
-    marginBottom: 24,
-  },
-  singleBenefitText: {
-    fontSize: 13.5,
-    color: '#475569',
-    fontWeight: '500',
-  },
-  singleBenefitBold: {
-    fontWeight: '800',
-    color: '#0F172A',
-  },
-
-  // DISCRETE CONTACT ACTIONS ROW STYLE
-  storeContactActionsRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 26,
-    paddingHorizontal: 20,
-  },
-  contactActionBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderRadius: 20,
-    paddingVertical: 7,
-    paddingHorizontal: 12,
-    gap: 5,
-    height: 32,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  contactActionBtnText: {
-    fontSize: 12.5,
-    fontWeight: '700',
-    color: '#475569',
-  },
-
-  // PRODUCTS GRID STYLES
   productsSection: {
     width: '100%',
     paddingHorizontal: 20,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '900',
-    color: '#0F172A',
-    marginBottom: 16,
-    letterSpacing: -0.4,
   },
   productsGrid: {
     flexDirection: 'row',
@@ -332,8 +211,4 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#8E8E93',
   },
-  extraSpacing: {
-    height: 40,
-  },
 });
-

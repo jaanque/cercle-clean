@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Text, Image, Pressable } from 'react-native';
+import { View, StyleSheet, Text, Image, Pressable, Animated } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import { Colors } from '@/constants/theme';
 
@@ -20,6 +20,8 @@ interface OfertaCardProps {
   fullWidth?: boolean;
   grid?: boolean;
   hidePickup?: boolean;
+  quantity?: number;
+  onQuantityChange?: (qty: number) => void;
 }
 
 const formatReviewsCount = (reviewsCount: string | undefined | null) => {
@@ -98,8 +100,52 @@ const renderStars = (ratingStr: string) => {
   );
 };
 
-export default function OfertaCard({ oferta, fullWidth = false, grid = false, hidePickup = false }: OfertaCardProps) {
+export default function OfertaCard({ 
+  oferta, 
+  fullWidth = false, 
+  grid = false, 
+  hidePickup = false,
+  quantity,
+  onQuantityChange
+}: OfertaCardProps) {
   const { integer, decimal } = parsePrice(oferta.price);
+  
+  const isControlled = quantity !== undefined && onQuantityChange !== undefined;
+  const [localQty, setLocalQty] = React.useState(0);
+  const qty = isControlled ? quantity : localQty;
+  const scaleAnim = React.useRef(new Animated.Value(1)).current;
+
+  const animateValue = () => {
+    scaleAnim.setValue(0.7);
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      tension: 180,
+      friction: 12,
+    }).start();
+  };
+
+  const handleIncrement = () => {
+    const next = qty + 1;
+    if (isControlled) {
+      onQuantityChange(next);
+    } else {
+      setLocalQty(next);
+    }
+    animateValue();
+  };
+
+  const handleDecrement = () => {
+    const next = Math.max(0, qty - 1);
+    if (isControlled) {
+      onQuantityChange(next);
+    } else {
+      setLocalQty(next);
+    }
+    if (next > 0) {
+      animateValue();
+    }
+  };
 
   return (
     <Pressable style={[styles.card, fullWidth && styles.fullWidthCard, grid && styles.gridCard]}>
@@ -149,9 +195,59 @@ export default function OfertaCard({ oferta, fullWidth = false, grid = false, hi
 
         {/* Botón de acción con curvatura estricta de 22px */}
         <View style={styles.actionContainer}>
-          <Pressable style={styles.addButton}>
-            <Text style={styles.addButtonText}>Comprar ya</Text>
-          </Pressable>
+          {qty === 0 ? (
+            <Pressable style={styles.addButton} onPress={handleIncrement}>
+              <Text style={styles.addButtonText}>Añadir</Text>
+            </Pressable>
+          ) : (
+            <View style={styles.activeActionsRow}>
+              <View style={styles.quantitySelector}>
+                <Pressable 
+                  style={({ pressed }) => [styles.qtyBtn, pressed && { opacity: 0.7 }]} 
+                  onPress={handleDecrement}
+                >
+                  <SymbolView 
+                    name="minus" 
+                    size={14} 
+                    tintColor="#ffffff" 
+                    weight="bold"
+                  />
+                </Pressable>
+                <Animated.Text style={[styles.qtyText, { transform: [{ scale: scaleAnim }] }]}>
+                  {qty}
+                </Animated.Text>
+                <Pressable 
+                  style={({ pressed }) => [styles.qtyBtn, pressed && { opacity: 0.7 }]} 
+                  onPress={handleIncrement}
+                >
+                  <SymbolView 
+                    name="plus" 
+                    size={14} 
+                    tintColor="#ffffff" 
+                    weight="bold"
+                  />
+                </Pressable>
+              </View>
+
+              <Pressable 
+                style={({ pressed }) => [styles.deleteBtn, pressed && { opacity: 0.75 }]} 
+                onPress={() => {
+                  if (isControlled) {
+                    onQuantityChange(0);
+                  } else {
+                    setLocalQty(0);
+                  }
+                }}
+              >
+                <SymbolView 
+                  name="trash" 
+                  size={14} 
+                  tintColor="#EF4444" 
+                  weight="bold"
+                />
+              </Pressable>
+            </View>
+          )}
         </View>
       </View>
     </Pressable>
@@ -311,5 +407,50 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
     color: '#ffffff',
+  },
+  quantitySelector: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: Colors.accent,
+    borderRadius: 22,
+    height: 38,
+    paddingHorizontal: 8,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 1,
+    elevation: 1,
+  },
+  activeActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    width: '100%',
+  },
+  deleteBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 22, // Border rounded strictly to 22px
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.15)',
+  },
+  qtyBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  qtyText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '800',
+    textAlign: 'center',
+    minWidth: 20,
   },
 });

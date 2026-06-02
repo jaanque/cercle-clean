@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
   logoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 10,
   },
   logoText: {
     fontSize: 22,
@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
     borderRadius: 6, // Square-ish modern badge like the bottomsheet
     justifyContent: 'center',
     alignItems: 'center',
-    transform: [{ rotate: '-4deg' }], // Playful matching rotation!
+    transform: [{ rotate: '-12deg' }], // Playful matching rotation!
   },
   plusText: {
     color: '#ffffff',

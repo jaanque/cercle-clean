@@ -288,8 +288,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 1,
     borderRadius: 6,
-    marginLeft: 6,
-    transform: [{ rotate: '-3deg' }],
+    marginLeft: 12,
+    transform: [{ rotate: '-12deg' }],
   },
   plusText: {
     color: '#ffffff',
