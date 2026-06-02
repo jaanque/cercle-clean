@@ -1,9 +1,15 @@
 import { Slot, usePathname, useRouter } from 'expo-router';
-import { View, StyleSheet, Text, Pressable, Platform } from 'react-native';
+import { View, StyleSheet, Text, Pressable, Platform, LayoutAnimation, UIManager } from 'react-native';
 import { SymbolView } from 'expo-symbols';
+import { useEffect } from 'react';
 
 import { Colors } from '@/constants/theme';
 import { AuthProvider } from '@/providers/AuthProvider';
+
+// Habilitar animaciones de diseño en Android
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 /**
  * RootLayout - Layout raíz global de la aplicación.
@@ -20,8 +26,28 @@ export default function RootLayout() {
   const navItems = [
     { name: 'Inicio', path: '/', icon: 'house', activeIcon: 'house.fill' },
     { name: 'Pedidos', path: '/orders', icon: 'bag', activeIcon: 'bag.fill' },
-    { name: 'Perfil', path: '/profile', icon: 'person.crop.circle', activeIcon: 'person.crop.circle.fill' },
+    { name: 'Perfil', path: '/profile', icon: 'person', activeIcon: 'person.fill' },
   ];
+
+  // Animar suavemente el menú de navegación al cambiar de pestaña
+  useEffect(() => {
+    LayoutAnimation.configureNext({
+      duration: 350,
+      create: {
+        type: LayoutAnimation.Types.easeInEaseOut,
+        property: LayoutAnimation.Properties.opacity,
+      },
+      update: {
+        type: LayoutAnimation.Types.spring,
+        springDamping: 0.68, // Efecto rebote moderno, muy responsivo y fluido
+      },
+      delete: {
+        type: LayoutAnimation.Types.linear,
+        duration: 0, // Desaparece al instante para evitar retrasos visuales
+        property: LayoutAnimation.Properties.opacity,
+      },
+    });
+  }, [pathname]);
 
   return (
     <AuthProvider>
@@ -30,26 +56,31 @@ export default function RootLayout() {
 
         {/* Menú de navegación inferior premium */}
         {!hideNavBar && (
-          <View style={styles.navBar}>
-            {navItems.map((item) => {
-              const isActive = pathname === item.path;
-              return (
-                <Pressable
-                  key={item.name}
-                  style={styles.navItem}
-                  onPress={() => router.push(item.path as any)}
-                >
-                  <SymbolView
-                    name={(isActive ? item.activeIcon : item.icon) as any}
-                    size={21}
-                    tintColor={isActive ? Colors.accent : '#707070'}
-                  />
-                  <Text style={[styles.navText, isActive ? styles.activeNavText : {}]}>
-                    {item.name}
-                  </Text>
-                </Pressable>
-              );
-            })}
+          <View style={styles.navBarContainer} pointerEvents="box-none">
+            <View style={styles.navBar}>
+              {navItems.map((item) => {
+                const isActive = pathname === item.path;
+                return (
+                  <Pressable
+                    key={item.name}
+                    style={[styles.navItem, isActive && styles.activeNavItem]}
+                    onPress={() => router.push(item.path as any)}
+                  >
+                    <SymbolView
+                      name={(isActive ? item.activeIcon : item.icon) as any}
+                      size={21}
+                      tintColor={isActive ? Colors.accent : '#666666'}
+                      weight="bold"
+                    />
+                    {isActive && (
+                      <Text style={styles.activeNavText}>
+                        {item.name}
+                      </Text>
+                    )}
+                  </Pressable>
+                );
+              })}
+            </View>
           </View>
         )}
       </View>
@@ -58,41 +89,40 @@ export default function RootLayout() {
 }
 
 const styles = StyleSheet.create({
-  navBar: {
+  navBarContainer: {
     position: 'absolute',
-    bottom: 0,
+    bottom: Platform.OS === 'ios' ? 20 : 12,
     left: 0,
     right: 0,
-    height: Platform.OS === 'ios' ? 86 : 66,
-    backgroundColor: '#ffffff',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    paddingBottom: Platform.OS === 'ios' ? 24 : 8,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.06)',
-    // Sombra suave de alta definición
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
-    elevation: 10,
-    zIndex: 1000,
-  },
-  navItem: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 6,
-    flex: 1,
-    gap: 4,
+    zIndex: 1000,
   },
-  navText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#707070',
+  navBar: {
+    backgroundColor: '#ffffff',
+    borderRadius: 27,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 2,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.08)',
+    gap: 3,
+  },
+  navItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 50,
+    paddingHorizontal: 16,
+    borderRadius: 25,
+    gap: 8,
+  },
+  activeNavItem: {
+    backgroundColor: 'rgba(91, 35, 51, 0.08)', // Tono suave de Colors.accent (#5B2333)
   },
   activeNavText: {
     color: Colors.accent,
-    fontWeight: '800',
+    fontSize: 13,
+    fontWeight: '700',
   },
 });
