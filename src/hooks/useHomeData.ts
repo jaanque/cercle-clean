@@ -2,6 +2,7 @@ import { Store } from '@/components/homeScreen/locales/locale-card';
 import { Product } from '@/components/homeScreen/ofertas/oferta-card';
 import { useAuth } from '@/providers/AuthProvider';
 import { useEffect, useState } from 'react';
+import { supabaseAuth } from '@/lib/supabase/supabase';
 
 export function useHomeData() {
   const [stores, setStores] = useState<Store[]>([]);
@@ -9,6 +10,7 @@ export function useHomeData() {
   const [userStamps, setUserStamps] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [recentSearches, setRecentSearches] = useState<any[]>([]);
+  const [banners, setBanners] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -53,6 +55,18 @@ export function useHomeData() {
         setCategories(data.categories || []);
         setRecentSearches(data.recent_searches || []);
       }
+
+      // Consulta de banners activos desde Supabase
+      const { data: bannersData, error: bannersError } = await supabaseAuth
+        .from('banners')
+        .select('*')
+        .eq('is_active', true);
+
+      if (bannersError) {
+        console.error('Error fetching banners:', bannersError);
+      } else {
+        setBanners(bannersData || []);
+      }
     } catch (err: any) {
       setError(err.message || 'Ocurrió un error inesperado al conectar con el servidor.');
     } finally {
@@ -70,6 +84,7 @@ export function useHomeData() {
     userStamps,
     categories,
     recentSearches,
+    banners,
     loading,
     error,
     refetch: fetchData,

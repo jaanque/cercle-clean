@@ -26,11 +26,11 @@ export default function HomeScreen() {
     stores, 
     userStamps, 
     categories,
+    banners,
     loading, 
     error,
     refetch,
   } = useHomeData();
-
   const [selectionsVisible, setSelectionsVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -108,31 +108,33 @@ export default function HomeScreen() {
           <View style={styles.dynamicContent}>
             
             {/* --- BANNER DESTACADO DELGADO Y ANCHO (Verde) --- */}
-            <View style={styles.paddingWrapper}>
-              <Pressable 
-                style={({ pressed }) => [
-                  styles.wideBannerCard,
-                  pressed && { opacity: 0.95, transform: [{ scale: 0.99 }] }
-                ]}
-                onPress={() => setSelectionsVisible(true)}
-              >
-                <View style={styles.bannerTextCol}>
-                  <Text style={styles.selectionsTitle} numberOfLines={2}>
-                    Selecciones{"\n"}queridas para ti
-                  </Text>
-                  <Text style={styles.selectionsSubtitle}>
-                    Belleza y tecnología a tu alcance
-                  </Text>
-                </View>
-                
-                {/* Imagen del banner a la derecha */}
-                <Image 
-                  source={selectionsBannerImg} 
-                  style={styles.wideBannerImage}
-                  resizeMode="cover"
-                />
-              </Pressable>
-            </View>
+            {banners.length > 0 && (
+              <View style={styles.paddingWrapper}>
+                <Pressable 
+                  style={({ pressed }) => [
+                    styles.wideBannerCard,
+                    pressed && { opacity: 0.95, transform: [{ scale: 0.99 }] }
+                  ]}
+                  onPress={() => setSelectionsVisible(true)}
+                >
+                  <View style={styles.bannerTextCol}>
+                    <Text style={styles.selectionsTitle} numberOfLines={2}>
+                      {banners[0].title}
+                    </Text>
+                    <Text style={styles.selectionsSubtitle}>
+                      {banners[0].subtitle}
+                    </Text>
+                  </View>
+                  
+                  {/* Imagen del banner a la derecha */}
+                  <Image 
+                    source={banners[0].image_url ? { uri: banners[0].image_url } : selectionsBannerImg} 
+                    style={styles.wideBannerImage}
+                    resizeMode="cover"
+                  />
+                </Pressable>
+              </View>
+            )}
 
             {/* Tarjeta de Sellos del Usuario */}
             <View style={styles.paddingWrapper}>
