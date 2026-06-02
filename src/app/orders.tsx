@@ -4,6 +4,37 @@ import { SymbolView } from 'expo-symbols';
 import { Colors } from '@/constants/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import OrdersSkeleton from '@/components/skeletons/ordersSkeleton';
+import { useAuth } from '@/providers/AuthProvider';
+import { supabaseAuth } from '@/lib/supabase/supabase';
+
+function formatOrderDate(dateString: string): string {
+  try {
+    const date = new Date(dateString);
+    const months = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+    const day = date.getDate();
+    const month = months[date.getMonth()];
+    const year = date.getFullYear();
+    return `${day} de ${month}, ${year}`;
+  } catch (e) {
+    return dateString;
+  }
+}
+
+function getStatusConfig(status: string) {
+  switch (status.toLowerCase()) {
+    case 'entregado':
+      return { color: '#4CAF50', icon: 'checkmark.circle.fill' };
+    case 'pendiente':
+      return { color: '#FFA000', icon: 'clock.fill' };
+    case 'cancelado':
+      return { color: '#F44336', icon: 'xmark.circle.fill' };
+    default:
+      return { color: '#2196F3', icon: 'info.circle.fill' };
+  }
+}
 
 // Componente premium QR Code Vectorial (Altamente Comprimido)
 const QRCode = () => {
@@ -54,16 +85,48 @@ export default function OrdersScreen() {
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   const [activeFilter, setActiveFilter] = useState('7d');
   const [loading, setLoading] = useState(true);
+  const [orders, setOrders] = useState<any[]>([]);
+  const { user } = useAuth();
 
-  // Simular carga de datos para el skeleton loader premium
+  // Fetch real user orders from Supabase
   useEffect(() => {
-    const timer = setTimeout(() => {
-      // Usar LayoutAnimation para que la aparición de la lista sea súper fluida
-      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-      setLoading(false);
-    }, 850);
-    return () => clearTimeout(timer);
-  }, []);
+    async function fetchOrders() {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+      try {
+        const { data, error } = await supabaseAuth
+          .from('orders')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Error fetching orders:', error);
+        } else if (data) {
+          const formatted = data.map((ord: any) => {
+            const statusConfig = getStatusConfig(ord.status);
+            return {
+              ...ord,
+              date: formatOrderDate(ord.created_at),
+              color: statusConfig.color,
+              icon: statusConfig.icon,
+            };
+          });
+          
+          LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+          setOrders(formatted);
+        }
+      } catch (err) {
+        console.error('Failed to fetch orders:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchOrders();
+  }, [user]);
 
   // Animar la transición del selector cuando cambie el filtro activo
   useEffect(() => {
@@ -84,36 +147,24 @@ export default function OrdersScreen() {
     });
   }, [activeFilter]);
 
-  const orders = [
-    { 
-      id: 'ORD-8392', 
-      date: '30 de Mayo, 2026', 
-      total: '45,00 €', 
-      status: 'Entregado', 
-      icon: 'checkmark.circle.fill', 
-      color: '#4CAF50',
-      store: 'Deportes al aire libre',
-      storeEmoji: '🏀',
-      items: [
-        { name: 'Cuerda para saltar premium', quantity: 1, price: '15,00 €' },
-        { name: 'Esterilla de yoga ecológica', quantity: 1, price: '30,00 €' }
-      ]
-    },
-    { 
-      id: 'ORD-7291', 
-      date: '14 de Mayo, 2026', 
-      total: '120,50 €', 
-      status: 'Entregado', 
-      icon: 'checkmark.circle.fill', 
-      color: '#4CAF50',
-      store: 'Cosmética ecológica',
-      storeEmoji: '💄',
-      items: [
-        { name: 'Crema facial hidratante bio', quantity: 2, price: '45,25 €' },
-        { name: 'Sérum regenerador ecológico', quantity: 1, price: '30,00 €' }
-      ]
-    },
-  ];
+  const getFilteredOrders = () => {
+    if (activeFilter === '24h') {
+      const oneDayAgo = new Date();
+      oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+      return orders.filter(o => new Date(o.created_at) >= oneDayAgo);
+    } else if (activeFilter === '7d') {
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      return orders.filter(o => new Date(o.created_at) >= sevenDaysAgo);
+    } else if (activeFilter === '15d') {
+      const fifteenDaysAgo = new Date();
+      fifteenDaysAgo.setDate(fifteenDaysAgo.getDate() - 15);
+      return orders.filter(o => new Date(o.created_at) >= fifteenDaysAgo);
+    }
+    return orders;
+  };
+
+  const filteredOrders = getFilteredOrders();
 
   const handleShare = async (order: any) => {
     try {
@@ -299,9 +350,9 @@ export default function OrdersScreen() {
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContentList}>
-            {orders.length > 0 ? (
+            {filteredOrders.length > 0 ? (
               <View style={styles.listContainer}>
-                {orders.map((order) => (
+                {filteredOrders.map((order) => (
                   <View key={order.id} style={styles.orderCard}>
                     <View style={styles.orderHeader}>
                       <Text style={styles.orderId}>{order.id}</Text>
